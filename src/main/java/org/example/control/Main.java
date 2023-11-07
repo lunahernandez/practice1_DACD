@@ -19,16 +19,8 @@ public class Main {
         WeatherStore sqLiteWeatherStore = new SqLiteWeatherStore(dbPath);
         WeatherController weatherController = new WeatherController(weatherProvider, sqLiteWeatherStore, locationList);
 
-        //TODO weatherController.execute();
+        weatherController.execute();
 
-        //TODO move this code to WeatherController
-        sqLiteWeatherStore.open(locationList);
-
-        for (Location location : locationList) {
-            for (Weather weather : weatherProvider.get(location, Instant.now())) {
-                sqLiteWeatherStore.save(weather);
-            }
-        }
     }
 
     public static List<Location> loadLocations() {

@@ -1,6 +1,9 @@
 package org.example.model;
 
+import java.time.Instant;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class WeatherController {
     private WeatherProvider weatherProvider;
@@ -37,5 +40,26 @@ public class WeatherController {
         this.locationList = locationList;
     }
 
-    //TODO execute: hace toda la tarea (aquí va el timertask)
+    public void execute() {
+        weatherStore.open(this.locationList);
+        Timer timer = new Timer();
+
+        long currentTimeMillis = System.currentTimeMillis();
+        long delayMillis = 6 * 60 * 60 * 1000 - (currentTimeMillis % (6 * 60 * 60 * 1000));
+
+        TimerTask task = new TimerTask() {
+            @Override
+            public void run() {
+                for (Location location : locationList) {
+                    for (Weather weather : weatherProvider.get(location)) {
+                        weatherStore.save(weather);
+                    }
+                }
+                System.out.println("New query finished.");
+            }
+        };
+
+        timer.schedule(task, delayMillis, 6 * 60 * 60 * 1000);
+    }
+
 }
