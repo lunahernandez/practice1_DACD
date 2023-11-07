@@ -1,8 +1,13 @@
 package org.example.model;
 
-public interface WeatherStore extends AutoCloseable{
+import java.time.Instant;
+import java.util.List;
+
+public interface WeatherStore extends AutoCloseable {
 
     void save(Weather weather);
 
-    public void get();
+    void open(List<Location> locationList);
+
+    void get(Location location, Instant ts);
 }
