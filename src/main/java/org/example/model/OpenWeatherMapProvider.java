@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 
 import com.google.gson.*;
+
 import java.net.URL;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -29,7 +30,7 @@ public class OpenWeatherMapProvider implements WeatherProvider {
 
         try {
             String apiUrl = "https://api.openweathermap.org/data/2.5/forecast?lat=" + lat +
-                            "&lon=" + lon + "&units=metric&appid=" + apiKey;
+                    "&lon=" + lon + "&units=metric&appid=" + apiKey;
             URL url = new URL(apiUrl);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("GET");
@@ -43,6 +44,7 @@ public class OpenWeatherMapProvider implements WeatherProvider {
 
         return jsonObject;
     }
+
     private List<Weather> convertJsonToWeatherList(JsonObject jsonObject, Location location, Instant ts) {
         List<Weather> weatherList = new ArrayList<>();
         JsonArray weatherListArray = jsonObject.getAsJsonArray("list");

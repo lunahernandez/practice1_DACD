@@ -1,6 +1,8 @@
 package org.example.model;
 
 import java.sql.*;
+import java.time.Instant;
+import java.util.List;
 
 public class SqLiteWeatherStore implements WeatherStore {
     private String dbPath;
@@ -35,11 +37,21 @@ public class SqLiteWeatherStore implements WeatherStore {
         }
     }
 
-
     @Override
-    public void get() {
+    public void open(List<Location> locationList) {
+        try (SqLiteWeatherStore weatherStore = new SqLiteWeatherStore(this.dbPath)) {
+            Connection connection = connect(weatherStore.getDbPath());
+            Statement statement = connection.createStatement();
 
+            for (Location location : locationList) {
+                createTable(statement, location.getIsland());
+            }
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
+
 
     @Override
     public void close() throws Exception {
@@ -105,7 +117,7 @@ public class SqLiteWeatherStore implements WeatherStore {
             int clouds, double windSpeed, String ts, String location) throws SQLException {
         String insertSQL =
                 "INSERT INTO " + tableName + " (dateTime, temp, pop, humidity, clouds, windSpeed, ts, location) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         PreparedStatement preparedStatement = connection.prepareStatement(insertSQL);
         preparedStatement.setString(1, dateTime);
         preparedStatement.setDouble(2, temp);
@@ -124,7 +136,7 @@ public class SqLiteWeatherStore implements WeatherStore {
         statement.execute("UPDATE " + tableName + "\n" +
                 "SET " + newData + " \n" +
                 "WHERE " + where + ";");
-        System.out.println("Table weather updated");
+        System.out.println("Table " + tableName + " updated");
     }
 
     public static Connection connect(String dbPath) {
@@ -132,11 +144,15 @@ public class SqLiteWeatherStore implements WeatherStore {
         try {
             String url = "jdbc:sqlite:" + dbPath;
             conn = DriverManager.getConnection(url);
-            System.out.println("Connection to SQLite has been established.");
             return conn;
         } catch (SQLException e) {
             System.out.println(e.getMessage());
         }
         return conn;
+    }
+
+    @Override
+    public void get(Location location, Instant ts) {
+
     }
 }
