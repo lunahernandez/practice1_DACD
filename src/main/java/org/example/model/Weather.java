@@ -1,29 +1,32 @@
 package org.example.model;
 
-import java.time.Instant;
 
 public class Weather {
-    //TODO delete ts
-    //TODO attributes final
+
+    private final String dateTime;
+    private final Location location;
     private final double temp;
     private final double pop;
     private final int humidity;
     private final int clouds;
     private final double windSpeed;
-    private final String dateTime;
-    private final Instant ts;
-    private final Location location;
 
-    public Weather(double temp, double pop, int humidity, int clouds, double windSpeed, String dateTime,
-                   Instant ts, Location location) {
+    public Weather(String dateTime, Location location, double temp, double pop, int humidity, int clouds, double windSpeed) {
+        this.dateTime = dateTime;
+        this.location = location;
         this.temp = temp;
         this.pop = pop;
         this.humidity = humidity;
         this.clouds = clouds;
         this.windSpeed = windSpeed;
-        this.dateTime = dateTime;
-        this.ts = ts;
-        this.location = location;
+    }
+
+    public String getDateTime() {
+        return dateTime;
+    }
+
+    public Location getLocation() {
+        return location;
     }
 
     public double getTemp() {
@@ -46,29 +49,16 @@ public class Weather {
         return windSpeed;
     }
 
-    public String getDateTime() {
-        return dateTime;
-    }
-
-    public Instant getTs() {
-        return ts;
-    }
-
-    public Location getLocation() {
-        return location;
-    }
-
     @Override
     public String toString() {
         return "Weather{" +
-                "temp=" + temp +
+                "dateTime='" + dateTime + '\'' +
+                ", location=" + location +
+                ", temp=" + temp +
                 ", pop=" + pop +
                 ", humidity=" + humidity +
                 ", clouds=" + clouds +
                 ", windSpeed=" + windSpeed +
-                ", dateTime='" + dateTime + '\'' +
-                ", ts=" + ts +
-                ", location=" + location +
                 '}';
     }
 }

@@ -8,21 +8,24 @@ import java.net.HttpURLConnection;
 import com.google.gson.*;
 
 import java.net.URL;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
 public class OpenWeatherMapProvider implements WeatherProvider {
-    private String apiKey;
+    private final String apiKey;
 
     public OpenWeatherMapProvider(String apikey) {
         this.apiKey = apikey;
     }
 
+    public String getApiKey() {
+        return apiKey;
+    }
+
     @Override
-    public List<Weather> get(Location location, Instant ts) {
-        JsonObject jsonObject = getJsonObjectFromOpenWeather(location.getLat(), location.getLon(), this.apiKey);
-        return convertJsonToWeatherList(jsonObject, location, ts);
+    public List<Weather> get(Location location) {
+        JsonObject jsonObject = getJsonObjectFromOpenWeather(location.getLat(), location.getLon(), getApiKey());
+        return convertJsonToWeatherList(jsonObject, location);
     }
 
     private JsonObject getJsonObjectFromOpenWeather(String lat, String lon, String apiKey) {
@@ -45,7 +48,7 @@ public class OpenWeatherMapProvider implements WeatherProvider {
         return jsonObject;
     }
 
-    private List<Weather> convertJsonToWeatherList(JsonObject jsonObject, Location location, Instant ts) {
+    private List<Weather> convertJsonToWeatherList(JsonObject jsonObject, Location location) {
         List<Weather> weatherList = new ArrayList<>();
         JsonArray weatherListArray = jsonObject.getAsJsonArray("list");
         for (JsonElement element : weatherListArray) {
@@ -64,7 +67,7 @@ public class OpenWeatherMapProvider implements WeatherProvider {
                 int clouds = cloudsInfo.get("all").getAsInt();
                 double windSpeed = windInfo.get("speed").getAsDouble();
 
-                Weather weather = new Weather(temperature, pop, humidity, clouds, windSpeed, dateTime, ts, location);
+                Weather weather = new Weather(dateTime, location, temperature, pop, humidity, clouds, windSpeed);
                 weatherList.add(weather);
             }
         }
