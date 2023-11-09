@@ -115,11 +115,11 @@ public class SqLiteWeatherStore implements WeatherStore {
                         "VALUES (?, ?, ?, ?, ?, ?)";
         PreparedStatement preparedStatement = connection.prepareStatement(insertSQL);
         preparedStatement.setString(1, weather.getDateTime());
-        preparedStatement.setDouble(3, weather.getTemp());
-        preparedStatement.setDouble(4, weather.getPop());
-        preparedStatement.setInt(5, weather.getHumidity());
-        preparedStatement.setInt(6, weather.getClouds());
-        preparedStatement.setDouble(7, weather.getWindSpeed());
+        preparedStatement.setDouble(2, weather.getTemp());
+        preparedStatement.setDouble(3, weather.getPop());
+        preparedStatement.setInt(4, weather.getHumidity());
+        preparedStatement.setInt(5, weather.getClouds());
+        preparedStatement.setDouble(6, weather.getWindSpeed());
 
         preparedStatement.executeUpdate();
     }
