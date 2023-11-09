@@ -55,7 +55,7 @@ public class WeatherController {
                         weatherStore.save(weather);
                     }
                 }
-                System.out.println("New query finished.");
+                System.out.println("New query finished at " + Instant.now() + ".");
             }
         };
 
