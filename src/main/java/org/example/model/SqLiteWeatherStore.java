@@ -119,8 +119,7 @@ public class SqLiteWeatherStore implements WeatherStore {
         preparedStatement.setDouble(3, weather.getPop());
         preparedStatement.setInt(4, weather.getHumidity());
         preparedStatement.setInt(5, weather.getClouds());
-        preparedStatement.setDouble(6
-                , weather.getWindSpeed());
+        preparedStatement.setDouble(6, weather.getWindSpeed());
 
         preparedStatement.executeUpdate();
     }
