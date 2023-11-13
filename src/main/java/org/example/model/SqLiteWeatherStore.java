@@ -1,13 +1,12 @@
 package org.example.model;
 
 import java.sql.*;
-import java.time.Instant;
 import java.util.List;
 
 public class SqLiteWeatherStore implements WeatherStore {
     //TODO decide to use try-catch blocks or attribute Connection and close()
     //TODO decide if use String/Date/Instant for date(time)
-    private String dbPath;
+    private final String dbPath;
 
     public SqLiteWeatherStore(String dbPath) {
         this.dbPath = dbPath;
@@ -17,9 +16,6 @@ public class SqLiteWeatherStore implements WeatherStore {
         return dbPath;
     }
 
-    public void setDbPath(String dbPath) {
-        this.dbPath = dbPath;
-    }
 
     @Override
     public void save(Weather weather) {
@@ -80,20 +76,10 @@ public class SqLiteWeatherStore implements WeatherStore {
 
 
     @Override
-    public void close() throws Exception {
+    public void close() {
 
     }
 
-
-    private static void delete(Statement statement, String tableName, String condition) throws SQLException {
-        String deleteSQL = "DELETE FROM " + tableName + " WHERE " + condition;
-        statement.execute(deleteSQL);
-    }
-
-    private static void dropTable(Statement statement, String tableName) throws SQLException {
-        String dropTableSQL = "DROP TABLE IF EXISTS " + tableName + ";";
-        statement.execute(dropTableSQL);
-    }
 
     public static void createTable(Statement statement, String tableName) throws SQLException {
         statement.execute("CREATE TABLE IF NOT EXISTS " + tableName + " (" +
@@ -153,7 +139,7 @@ public class SqLiteWeatherStore implements WeatherStore {
     }
 
 
-    public void updateOrInsert(Weather weather) {
+    private void updateOrInsert(Weather weather) {
         try (Connection connection = connect(dbPath)) {
             String tableName = weather.getLocation().getIsland();
             String dateTime = weather.getDateTime();
