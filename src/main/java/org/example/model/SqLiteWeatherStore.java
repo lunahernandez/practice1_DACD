@@ -5,7 +5,6 @@ import java.time.Instant;
 import java.util.List;
 
 public class SqLiteWeatherStore implements WeatherStore {
-    //TODO decide to use try-catch blocks or attribute Connection and close()
     private final String dbPath;
 
     public SqLiteWeatherStore(String dbPath) {
@@ -46,16 +45,12 @@ public class SqLiteWeatherStore implements WeatherStore {
         Weather weather = null;
 
         try (Connection connection = connect(dbPath)) {
-            System.out.println("1");
             String query = "SELECT temp, pop, humidity, clouds, windSpeed FROM " +
                     location.island() + " WHERE ts = ?";
             try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
                 preparedStatement.setString(1, String.valueOf(ts));
-                System.out.println("2");
                 try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                    System.out.println("3");
                     if (resultSet.next()) {
-                        System.out.println("4");
                         double temp = resultSet.getDouble("temp");
                         double pop = resultSet.getDouble("pop");
                         int humidity = resultSet.getInt("humidity");
@@ -72,7 +67,6 @@ public class SqLiteWeatherStore implements WeatherStore {
 
         return weather;
     }
-
 
 
     @Override

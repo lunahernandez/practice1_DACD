@@ -2,7 +2,6 @@ package org.example.control;
 
 import org.example.model.*;
 
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,7 +19,6 @@ public class Main {
         WeatherController weatherController = new WeatherController(weatherProvider, sqLiteWeatherStore, locationList);
 
         weatherController.execute();
-
     }
 
     public static List<Location> loadLocations() {

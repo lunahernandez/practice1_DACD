@@ -6,37 +6,13 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class WeatherController {
-    private WeatherProvider weatherProvider;
-    private WeatherStore weatherStore;
-    private List<Location> locationList;
+    private final WeatherProvider weatherProvider;
+    private final WeatherStore weatherStore;
+    private final List<Location> locationList;
 
     public WeatherController(WeatherProvider weatherProvider, WeatherStore weatherStore, List<Location> locationList) {
         this.weatherProvider = weatherProvider;
         this.weatherStore = weatherStore;
-        this.locationList = locationList;
-    }
-
-    public WeatherProvider getWeatherProvider() {
-        return weatherProvider;
-    }
-
-    public void setWeatherProvider(WeatherProvider weatherProvider) {
-        this.weatherProvider = weatherProvider;
-    }
-
-    public WeatherStore getWeatherStore() {
-        return weatherStore;
-    }
-
-    public void setWeatherStore(WeatherStore weatherStore) {
-        this.weatherStore = weatherStore;
-    }
-
-    public List<Location> getLocationList() {
-        return locationList;
-    }
-
-    public void setLocationList(List<Location> locationList) {
         this.locationList = locationList;
     }
 
@@ -56,6 +32,7 @@ public class WeatherController {
                     }
                 }
                 System.out.println("New query finished at " + Instant.now() + ".");
+
             }
         };
 
