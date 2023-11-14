@@ -1,11 +1,11 @@
 package org.example.model;
 
 import java.sql.*;
+import java.time.Instant;
 import java.util.List;
 
 public class SqLiteWeatherStore implements WeatherStore {
     //TODO decide to use try-catch blocks or attribute Connection and close()
-    //TODO decide if use String/Date/Instant for date(time)
     private final String dbPath;
 
     public SqLiteWeatherStore(String dbPath) {
@@ -19,7 +19,7 @@ public class SqLiteWeatherStore implements WeatherStore {
 
     @Override
     public void save(Weather weather) {
-        try (Connection connection = connect(dbPath)) {
+        try (Connection ignored = connect(dbPath)) {
             updateOrInsert(weather);
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -33,7 +33,7 @@ public class SqLiteWeatherStore implements WeatherStore {
             Statement statement = connection.createStatement();
 
             for (Location location : locationList) {
-                createTable(statement, location.getIsland());
+                createTable(statement, location.island());
             }
 
         } catch (Exception e) {
@@ -42,15 +42,15 @@ public class SqLiteWeatherStore implements WeatherStore {
     }
 
     @Override
-    public Weather get(Location location, String dateTime) {
+    public Weather get(Location location, Instant ts) {
         Weather weather = null;
 
         try (Connection connection = connect(dbPath)) {
             System.out.println("1");
             String query = "SELECT temp, pop, humidity, clouds, windSpeed FROM " +
-                    location.getIsland() + " WHERE dateTime = ?";
+                    location.island() + " WHERE ts = ?";
             try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
-                preparedStatement.setString(1, dateTime);
+                preparedStatement.setString(1, String.valueOf(ts));
                 System.out.println("2");
                 try (ResultSet resultSet = preparedStatement.executeQuery()) {
                     System.out.println("3");
@@ -62,7 +62,7 @@ public class SqLiteWeatherStore implements WeatherStore {
                         int clouds = resultSet.getInt("clouds");
                         double windSpeed = resultSet.getDouble("windSpeed");
 
-                        weather = new Weather(dateTime, location, temp, pop, humidity, clouds, windSpeed);
+                        weather = new Weather(ts, location, temp, pop, humidity, clouds, windSpeed);
                     }
                 }
             }
@@ -84,7 +84,7 @@ public class SqLiteWeatherStore implements WeatherStore {
     public static void createTable(Statement statement, String tableName) throws SQLException {
         statement.execute("CREATE TABLE IF NOT EXISTS " + tableName + " (" +
                 "id INTEGER PRIMARY KEY AUTOINCREMENT," +
-                "dateTime TEXT," +
+                "ts TEXT," +
                 "temp REAL," +
                 "pop REAL," +
                 "humidity INTEGER," +
@@ -96,31 +96,31 @@ public class SqLiteWeatherStore implements WeatherStore {
     private static void insert(
             Connection connection, Weather weather) throws SQLException {
         String insertSQL =
-                "INSERT INTO " + weather.getLocation().getIsland() +
-                        " (dateTime, temp, pop, humidity, clouds, windSpeed) " +
+                "INSERT INTO " + weather.location().island() +
+                        " (ts, temp, pop, humidity, clouds, windSpeed) " +
                         "VALUES (?, ?, ?, ?, ?, ?)";
         PreparedStatement preparedStatement = connection.prepareStatement(insertSQL);
-        preparedStatement.setString(1, weather.getDateTime());
-        preparedStatement.setDouble(2, weather.getTemp());
-        preparedStatement.setDouble(3, weather.getPop());
-        preparedStatement.setInt(4, weather.getHumidity());
-        preparedStatement.setInt(5, weather.getClouds());
-        preparedStatement.setDouble(6, weather.getWindSpeed());
+        preparedStatement.setString(1, String.valueOf(weather.ts()));
+        preparedStatement.setDouble(2, weather.temp());
+        preparedStatement.setDouble(3, weather.pop());
+        preparedStatement.setInt(4, weather.humidity());
+        preparedStatement.setInt(5, weather.clouds());
+        preparedStatement.setDouble(6, weather.windSpeed());
 
         preparedStatement.executeUpdate();
     }
 
 
     private static void update(Connection connection, Weather weather) throws SQLException {
-        String updateSQL = "UPDATE " + weather.getLocation().getIsland() +
-                " SET temp = ?, pop = ?, humidity = ?, clouds = ?, windSpeed = ? WHERE dateTime = ?";
+        String updateSQL = "UPDATE " + weather.location().island() +
+                " SET temp = ?, pop = ?, humidity = ?, clouds = ?, windSpeed = ? WHERE ts = ?";
         try (PreparedStatement preparedStatement = connection.prepareStatement(updateSQL)) {
-            preparedStatement.setDouble(1, weather.getTemp());
-            preparedStatement.setDouble(2, weather.getPop());
-            preparedStatement.setInt(3, weather.getHumidity());
-            preparedStatement.setInt(4, weather.getClouds());
-            preparedStatement.setDouble(5, weather.getWindSpeed());
-            preparedStatement.setString(6, weather.getDateTime());
+            preparedStatement.setDouble(1, weather.temp());
+            preparedStatement.setDouble(2, weather.pop());
+            preparedStatement.setInt(3, weather.humidity());
+            preparedStatement.setInt(4, weather.clouds());
+            preparedStatement.setDouble(5, weather.windSpeed());
+            preparedStatement.setString(6, String.valueOf(weather.ts()));
             preparedStatement.executeUpdate();
         }
     }
@@ -141,10 +141,10 @@ public class SqLiteWeatherStore implements WeatherStore {
 
     private void updateOrInsert(Weather weather) {
         try (Connection connection = connect(dbPath)) {
-            String tableName = weather.getLocation().getIsland();
-            String dateTime = weather.getDateTime();
+            String tableName = weather.location().island();
+            Instant ts = weather.ts();
 
-            if (isDateTimeInTable(connection, tableName, dateTime)) {
+            if (isDateTimeInTable(connection, tableName, ts)) {
                 update(connection, weather);
             } else {
                 insert(connection, weather);
@@ -154,11 +154,11 @@ public class SqLiteWeatherStore implements WeatherStore {
         }
     }
 
-    private static boolean isDateTimeInTable(Connection connection, String tableName, String dateTime)
+    private static boolean isDateTimeInTable(Connection connection, String tableName, Instant ts)
             throws SQLException {
-        String query = "SELECT COUNT(*) FROM " + tableName + " WHERE dateTime = ?";
+        String query = "SELECT COUNT(*) FROM " + tableName + " WHERE ts = ?";
         try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
-            preparedStatement.setString(1, dateTime);
+            preparedStatement.setString(1, String.valueOf(ts));
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
                 if (resultSet.next()) {
                     int count = resultSet.getInt(1);

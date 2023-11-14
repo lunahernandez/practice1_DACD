@@ -8,6 +8,9 @@ import java.net.HttpURLConnection;
 import com.google.gson.*;
 
 import java.net.URL;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,7 +27,7 @@ public class OpenWeatherMapProvider implements WeatherProvider {
 
     @Override
     public List<Weather> get(Location location) {
-        JsonObject jsonObject = getJsonObjectFromOpenWeather(location.getLat(), location.getLon(), getApiKey());
+        JsonObject jsonObject = getJsonObjectFromOpenWeather(location.lat(), location.lon(), getApiKey());
         return convertJsonToWeatherList(jsonObject, location);
     }
 
@@ -54,28 +57,30 @@ public class OpenWeatherMapProvider implements WeatherProvider {
         for (JsonElement element : weatherListArray) {
             JsonObject weatherInfo = element.getAsJsonObject();
 
-            String dateTime = weatherInfo.get("dt_txt").getAsString();
-
-            if (isMidday(dateTime)) {
+            if (isMidday(weatherInfo.get("dt").getAsLong())) {
                 JsonObject mainInfo = weatherInfo.getAsJsonObject("main");
                 JsonObject cloudsInfo = weatherInfo.getAsJsonObject("clouds");
                 JsonObject windInfo = weatherInfo.getAsJsonObject("wind");
 
+                Instant ts = Instant.ofEpochSecond(weatherInfo.get("dt").getAsLong());
                 double temperature = mainInfo.get("temp").getAsDouble();
                 double pop = weatherInfo.get("pop").getAsDouble();
                 int humidity = mainInfo.get("humidity").getAsInt();
                 int clouds = cloudsInfo.get("all").getAsInt();
                 double windSpeed = windInfo.get("speed").getAsDouble();
 
-                Weather weather = new Weather(dateTime, location, temperature, pop, humidity, clouds, windSpeed);
+                Weather weather = new Weather(ts, location, temperature, pop, humidity, clouds, windSpeed);
                 weatherList.add(weather);
             }
         }
         return weatherList;
     }
 
-    private static boolean isMidday(String dateTime) {
-        return dateTime.endsWith("12:00:00");
+    private static boolean isMidday(long timestamp) {
+        Instant ts = Instant.ofEpochSecond(timestamp);
+        LocalDateTime dateTime = LocalDateTime.ofInstant(ts, ZoneOffset.UTC);
+        return dateTime.getHour() == 12 && dateTime.getMinute() == 0 && dateTime.getSecond() == 0;
+
     }
 }
 

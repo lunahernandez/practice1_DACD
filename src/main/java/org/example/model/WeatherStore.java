@@ -9,5 +9,5 @@ public interface WeatherStore extends AutoCloseable {
 
     void open(List<Location> locationList);
 
-    Weather get(Location location, String dateTime);
+    Weather get(Location location, Instant ts);
 }
