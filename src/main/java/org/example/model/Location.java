@@ -1,9 +1,9 @@
 package org.example.model;
 
 public class Location {
-    private String lat;
-    private String lon;
-    private String island;
+    private final String lat;
+    private final String lon;
+    private final String island;
 
     public Location(String lat, String lon, String island) {
         this.lat = lat;
@@ -15,25 +15,15 @@ public class Location {
         return lat;
     }
 
-    public void setLat(String lat) {
-        this.lat = lat;
-    }
-
     public String getLon() {
         return lon;
     }
 
-    public void setLon(String lon) {
-        this.lon = lon;
-    }
 
     public String getIsland() {
         return island;
     }
 
-    public void setIsland(String island) {
-        this.island = island;
-    }
 
     @Override
     public String toString() {
