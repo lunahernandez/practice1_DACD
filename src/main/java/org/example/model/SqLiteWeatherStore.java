@@ -4,16 +4,7 @@ import java.sql.*;
 import java.time.Instant;
 import java.util.List;
 
-public class SqLiteWeatherStore implements WeatherStore {
-    private final String dbPath;
-
-    public SqLiteWeatherStore(String dbPath) {
-        this.dbPath = dbPath;
-    }
-
-    public String getDbPath() {
-        return dbPath;
-    }
+public record SqLiteWeatherStore(String dbPath) implements WeatherStore {
 
 
     @Override
@@ -28,7 +19,7 @@ public class SqLiteWeatherStore implements WeatherStore {
     @Override
     public void open(List<Location> locationList) {
         try (SqLiteWeatherStore weatherStore = new SqLiteWeatherStore(this.dbPath)) {
-            Connection connection = connect(weatherStore.getDbPath());
+            Connection connection = connect(weatherStore.dbPath());
             Statement statement = connection.createStatement();
 
             for (Location location : locationList) {
@@ -125,7 +116,6 @@ public class SqLiteWeatherStore implements WeatherStore {
         try {
             String url = "jdbc:sqlite:" + dbPath;
             conn = DriverManager.getConnection(url);
-            return conn;
         } catch (SQLException e) {
             System.out.println(e.getMessage());
         }
