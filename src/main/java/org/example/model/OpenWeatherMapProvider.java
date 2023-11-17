@@ -32,7 +32,7 @@ public class OpenWeatherMapProvider implements WeatherProvider {
     }
 
     private JsonObject getJsonObjectFromOpenWeather(String lat, String lon, String apiKey) {
-        JsonObject jsonObject = null;
+        JsonObject jsonObject;
 
         try {
             String apiUrl = "https://api.openweathermap.org/data/2.5/forecast?lat=" + lat +
