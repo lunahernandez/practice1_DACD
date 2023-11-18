@@ -10,12 +10,31 @@
 **University:** Universidad de Las Palmas de Gran Canaria
 
 ## Summary of Functionality
-This Java application requests the OpenWeatherMap API, a weather service, every 6 hours to get the weather 
-forecast for the next five days at 12pm for each of the eight Canary Islands.
+This Java application requests the [OpenWeatherMap API](https://openweathermap.org/api),
+a weather service, every 6 hours to get the weather forecast for the next five days at 12pm for each of
+the eight Canary Islands.
 
 The data obtained is then stored in a SQLite database, in which there is a table for each of the islands, 
 and each day has an entry that indicates the temperature, the probability of precipitation, the humidity, 
 the clouds and the wind speed.
+
+## Run the Project in IntelliJ IDEA
+
+This project can be run in IntelliJ IDEA by following these steps:
+
+1. **Get the Code:** Download the code zip and unzip it wherever you want to store it.
+
+2. **Open the Project:** Open IntelliJ IDEA and select "Open" from the main menu. Navigate to the project folder.
+
+3. **Configure Run Arguments:** You must pass as arguments your OpenWeatherMap apikey and the path to the
+database where you want to store the obtained data. For example:
+
+   ```bash
+   tu_api_key /ruta/a/tu/base/de/datos.db
+4. **Run the project:** Click on the run button (green) in the top right corner or press `Shift` `F10`
+
+You can find more information to know how to set the Program Arguments in IntelliJ IDEA
+[here](https://www.jetbrains.com/help/idea/run-debug-configuration-java-application.html).
 
 ## Resources Used
 
@@ -48,3 +67,6 @@ Interfaces must be designed specifically, omitting unnecessary methods. For exam
 The last principle is the Dependency Inversion Principle (DIP), where dependencies are inverted in order to separate 
 high-level classes from low-level classes. For example, `WeatherController` depends on interfaces (`WeatherProvider`
 and `WeatherStore`) instead of specific implementations.
+
+### Class Diagram and Dependencies
+![UML Class Diagram](src/main/resources/images/weatherDiagramUML.png)

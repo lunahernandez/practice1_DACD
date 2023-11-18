@@ -1,4 +1,4 @@
-package org.example.model;
+package hernandez.guerra.model;
 
 import java.io.BufferedReader;
 import java.io.IOException;

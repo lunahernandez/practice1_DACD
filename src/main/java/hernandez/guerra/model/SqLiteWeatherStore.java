@@ -1,4 +1,4 @@
-package org.example.model;
+package hernandez.guerra.model;
 
 import java.sql.*;
 import java.time.Instant;

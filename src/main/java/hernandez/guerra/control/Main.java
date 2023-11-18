@@ -1,6 +1,6 @@
-package org.example.control;
+package hernandez.guerra.control;
 
-import org.example.model.*;
+import hernandez.guerra.model.*;
 
 import java.util.ArrayList;
 import java.util.List;
