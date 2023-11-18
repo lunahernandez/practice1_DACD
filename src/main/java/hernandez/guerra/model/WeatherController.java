@@ -20,9 +20,6 @@ public class WeatherController {
         weatherStore.open(this.locationList);
         Timer timer = new Timer();
 
-        long currentTimeMillis = System.currentTimeMillis();
-        long delayMillis = 6 * 60 * 60 * 1000 - (currentTimeMillis % (6 * 60 * 60 * 1000));
-
         TimerTask task = new TimerTask() {
             @Override
             public void run() {
@@ -36,7 +33,7 @@ public class WeatherController {
             }
         };
 
-        timer.schedule(task, delayMillis, 6 * 60 * 60 * 1000);
+        timer.schedule(task, 0, 6 * 60 * 60 * 1000);
     }
 
 }
