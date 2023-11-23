@@ -1,4 +1,7 @@
-package hernandez.guerra.model;
+package hernandez.guerra.control;
+
+import hernandez.guerra.model.Location;
+import hernandez.guerra.model.Weather;
 
 import java.time.Instant;
 import java.util.List;
@@ -17,23 +20,32 @@ public class WeatherController {
     }
 
     public void execute() {
-        weatherStore.open(this.locationList);
-        Timer timer = new Timer();
+        openWeatherStore();
+        periodicWeatherUpdateTask();
+    }
 
+    private void openWeatherStore() {
+        weatherStore.open(this.locationList);
+    }
+
+    private void periodicWeatherUpdateTask() {
+        Timer timer = new Timer();
         TimerTask task = new TimerTask() {
             @Override
             public void run() {
-                for (Location location : locationList) {
-                    for (Weather weather : weatherProvider.get(location)) {
-                        weatherStore.save(weather);
-                    }
-                }
+                updateWeatherData();
                 System.out.println("New query finished at " + Instant.now() + ".");
-
             }
         };
-
         timer.schedule(task, 0, 6 * 60 * 60 * 1000);
+    }
+
+    private void updateWeatherData() {
+        for (Location location : locationList) {
+            for (Weather weather : weatherProvider.get(location)) {
+                weatherStore.save(weather);
+            }
+        }
     }
 
 }

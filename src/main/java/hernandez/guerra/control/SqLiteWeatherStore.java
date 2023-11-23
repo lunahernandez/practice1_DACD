@@ -1,4 +1,7 @@
-package hernandez.guerra.model;
+package hernandez.guerra.control;
+
+import hernandez.guerra.model.Location;
+import hernandez.guerra.model.Weather;
 
 import java.sql.*;
 import java.time.Instant;
@@ -22,49 +25,19 @@ public record SqLiteWeatherStore(String dbPath) implements WeatherStore {
             Connection connection = connect(weatherStore.dbPath());
             Statement statement = connection.createStatement();
 
-            for (Location location : locationList) {
-                createTable(statement, location.island());
-            }
+            createTablesForLocations(statement, locationList);
 
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
-    @Override
-    public Weather get(Location location, Instant ts) {
-        Weather weather = null;
-
-        try (Connection connection = connect(dbPath)) {
-            String query = "SELECT temp, pop, humidity, clouds, windSpeed FROM " +
-                    location.island() + " WHERE ts = ?";
-            try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
-                preparedStatement.setString(1, String.valueOf(ts));
-                try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                    if (resultSet.next()) {
-                        double temp = resultSet.getDouble("temp");
-                        double pop = resultSet.getDouble("pop");
-                        int humidity = resultSet.getInt("humidity");
-                        int clouds = resultSet.getInt("clouds");
-                        double windSpeed = resultSet.getDouble("windSpeed");
-
-                        weather = new Weather(ts, location, temp, pop, humidity, clouds, windSpeed);
-                    }
-                }
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
+    private void createTablesForLocations(Statement statement, List<Location> locationList)
+            throws SQLException {
+        for (Location location : locationList) {
+            createTable(statement, location.island());
         }
-
-        return weather;
     }
-
-
-    @Override
-    public void close() {
-
-    }
-
 
     public static void createTable(Statement statement, String tableName) throws SQLException {
         statement.execute("CREATE TABLE IF NOT EXISTS " + tableName + " (" +
@@ -78,12 +51,48 @@ public record SqLiteWeatherStore(String dbPath) implements WeatherStore {
                 ");");
     }
 
+    @Override
+    public Weather get(Location location, Instant ts) {
+        try (Connection connection = connect(dbPath)) {
+            String query = "SELECT temp, pop, humidity, clouds, windSpeed FROM " +
+                    location.island() + " WHERE ts = ?";
+            return executeQuery(connection, query, ts, location);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private Weather executeQuery(Connection connection, String query, Instant ts, Location location)
+            throws SQLException {
+        try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+            preparedStatement.setString(1, String.valueOf(ts));
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                return resultSet.next() ? extractWeatherFromResultSet(ts, location, resultSet) : null;
+            }
+        }
+    }
+
+    private Weather extractWeatherFromResultSet(Instant ts, Location location, ResultSet resultSet)
+            throws SQLException {
+        double temp = resultSet.getDouble("temp");
+        double pop = resultSet.getDouble("pop");
+        int humidity = resultSet.getInt("humidity");
+        int clouds = resultSet.getInt("clouds");
+        double windSpeed = resultSet.getDouble("windSpeed");
+
+        return new Weather(ts, location, temp, pop, humidity, clouds, windSpeed);
+    }
+
+
+    @Override
+    public void close() {
+
+    }
+
     private static void insert(
             Connection connection, Weather weather) throws SQLException {
-        String insertSQL =
-                "INSERT INTO " + weather.location().island() +
-                        " (ts, temp, pop, humidity, clouds, windSpeed) " +
-                        "VALUES (?, ?, ?, ?, ?, ?)";
+        String insertSQL = "INSERT INTO " + weather.location().island() +
+                " (ts, temp, pop, humidity, clouds, windSpeed) " + "VALUES (?, ?, ?, ?, ?, ?)";
         PreparedStatement preparedStatement = connection.prepareStatement(insertSQL);
         preparedStatement.setString(1, String.valueOf(weather.ts()));
         preparedStatement.setDouble(2, weather.temp());
@@ -143,13 +152,13 @@ public record SqLiteWeatherStore(String dbPath) implements WeatherStore {
         String query = "SELECT COUNT(*) FROM " + tableName + " WHERE ts = ?";
         try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
             preparedStatement.setString(1, String.valueOf(ts));
-            try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                if (resultSet.next()) {
-                    int count = resultSet.getInt(1);
-                    return count > 0;
-                }
-            }
+            return countDateTimeInTable(preparedStatement);
         }
-        return false;
+    }
+
+    private static boolean countDateTimeInTable(PreparedStatement preparedStatement) throws SQLException {
+        try (ResultSet resultSet = preparedStatement.executeQuery()) {
+            return resultSet.next() && resultSet.getInt(1) > 0;
+        }
     }
 }

@@ -69,4 +69,5 @@ high-level classes from low-level classes. For example, `WeatherController` depe
 and `WeatherStore`) instead of specific implementations.
 
 ### Class Diagram and Dependencies
-![UML Class Diagram](src/main/resources/images/weatherDiagramUML.png)
+
+![UML Class Diagram](weatherDiagramUML.png)
