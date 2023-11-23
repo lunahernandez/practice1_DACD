@@ -1,4 +1,7 @@
-package hernandez.guerra.model;
+package hernandez.guerra.control;
+
+import hernandez.guerra.model.Location;
+import hernandez.guerra.model.Weather;
 
 import java.time.Instant;
 import java.util.List;
