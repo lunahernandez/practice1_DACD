@@ -10,13 +10,11 @@ public class Main {
 
     public static void main(String[] args) {
         String apikey = args[0];
-        String dbPath = args[1];
 
         List<Location> locationList = loadLocations();
 
         WeatherProvider weatherProvider = new OpenWeatherMapProvider(apikey);
-        WeatherStore sqLiteWeatherStore = new SqLiteWeatherStore(dbPath);
-        WeatherController weatherController = new WeatherController(weatherProvider, sqLiteWeatherStore, locationList);
+        WeatherController weatherController = new WeatherController(weatherProvider, locationList);
 
         weatherController.execute();
     }

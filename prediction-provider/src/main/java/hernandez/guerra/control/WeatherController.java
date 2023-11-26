@@ -10,23 +10,17 @@ import java.util.TimerTask;
 
 public class WeatherController {
     private final WeatherProvider weatherProvider;
-    private final WeatherStore weatherStore;
     private final List<Location> locationList;
 
-    public WeatherController(WeatherProvider weatherProvider, WeatherStore weatherStore, List<Location> locationList) {
+    public WeatherController(WeatherProvider weatherProvider, List<Location> locationList) {
         this.weatherProvider = weatherProvider;
-        this.weatherStore = weatherStore;
         this.locationList = locationList;
     }
 
     public void execute() {
-        openWeatherStore();
         periodicWeatherUpdateTask();
     }
 
-    private void openWeatherStore() {
-        weatherStore.open(this.locationList);
-    }
 
     private void periodicWeatherUpdateTask() {
         Timer timer = new Timer();
@@ -43,7 +37,7 @@ public class WeatherController {
     private void updateWeatherData() {
         for (Location location : locationList) {
             for (Weather weather : weatherProvider.get(location)) {
-                weatherStore.save(weather);
+                System.out.println(weather);
             }
         }
     }
