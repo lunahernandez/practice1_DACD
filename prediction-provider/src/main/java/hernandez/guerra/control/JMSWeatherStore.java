@@ -1,5 +1,7 @@
 package hernandez.guerra.control;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import hernandez.guerra.model.Location;
 import hernandez.guerra.model.Weather;
 
@@ -23,8 +25,12 @@ public class JMSWeatherStore implements WeatherStore {
             Topic destination = session.createTopic(topicName);
 
             MessageProducer producer = session.createProducer(destination);
-            TextMessage message = session.createTextMessage("Hello from JMS Publisher!");
-
+            //TextMessage message = session.createTextMessage("Hello from JMS Publisher!");
+            Gson gson = new GsonBuilder()
+                    .registerTypeAdapter(Instant.class, new InstantTypeAdapter())
+                    .create();
+            String jsonWeather = gson.toJson(weather);
+            TextMessage message = session.createTextMessage(jsonWeather);
             producer.send(message);
 
             System.out.println("Message sent to topic '" + topicName + "': '" + message.getText() + "'");
