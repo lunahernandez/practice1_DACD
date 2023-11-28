@@ -79,14 +79,16 @@ public class OpenWeatherMapProvider implements WeatherProvider {
 
 
     private Weather createWeatherFromJson(JsonObject weatherInfo, Location location) {
-        Instant ts = Instant.ofEpochSecond(weatherInfo.get("dt").getAsLong());
+        Instant predictionTime = Instant.ofEpochSecond(weatherInfo.get("dt").getAsLong());
         double temperature = weatherInfo.getAsJsonObject("main").get("temp").getAsDouble();
         double pop = weatherInfo.get("pop").getAsDouble();
         int humidity = weatherInfo.getAsJsonObject("main").get("humidity").getAsInt();
         int clouds = weatherInfo.getAsJsonObject("clouds").get("all").getAsInt();
         double windSpeed = weatherInfo.getAsJsonObject("wind").get("speed").getAsDouble();
 
-        return new Weather(ts, location, temperature, pop, humidity, clouds, windSpeed);
+        return new Weather(Instant.now(), "WeatherProvider/OpenWeatherMap", predictionTime, location,
+                temperature, pop, humidity, clouds, windSpeed)
+                ;
     }
 
     private static boolean isMidday(long timestamp) {

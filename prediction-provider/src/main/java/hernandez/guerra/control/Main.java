@@ -14,7 +14,8 @@ public class Main {
         List<Location> locationList = loadLocations();
 
         WeatherProvider weatherProvider = new OpenWeatherMapProvider(apikey);
-        WeatherController weatherController = new WeatherController(weatherProvider, locationList);
+        WeatherStore weatherStore = new JMSWeatherStore();
+        WeatherController weatherController = new WeatherController(weatherProvider, weatherStore, locationList);
 
         weatherController.execute();
     }
