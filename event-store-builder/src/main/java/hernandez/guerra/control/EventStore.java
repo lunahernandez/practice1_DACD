@@ -1,16 +1,18 @@
 package hernandez.guerra.control;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import jakarta.jms.*;
-
 import org.apache.activemq.ActiveMQConnectionFactory;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.text.SimpleDateFormat;
 import java.time.Instant;
-import java.util.Date;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 
 public class EventStore {
     private final String brokerUrl;
@@ -51,8 +53,8 @@ public class EventStore {
                 String eventData = textMessage.getText();
                 Instant eventTimestamp = Instant.ofEpochMilli(textMessage.getJMSTimestamp());
 
-                String directoryPath = buildEventStoreDirectoryPath(eventTimestamp);
-                String filePath = buildEventFilePath(eventTimestamp);
+                String directoryPath = buildEventStoreDirectoryPath(eventTimestamp, eventData);
+                String filePath = buildEventFilePath(eventTimestamp, eventData);
 
                 saveEventToFile(directoryPath, filePath, eventData);
                 System.out.println("Event stored successfully at: " + filePath);
@@ -63,14 +65,26 @@ public class EventStore {
         }
     }
 
-    private String buildEventStoreDirectoryPath(Instant timestamp) {
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
-        String dateString = dateFormat.format(Date.from(timestamp));
-        return eventStoreDirectory + "/" + topicName + "/" + dateString;
+
+    private String buildEventStoreDirectoryPath(Instant timestamp, String eventData) {
+
+        LocalDate localDate = LocalDate.ofInstant(timestamp, ZoneOffset.UTC);
+        String dateString = localDate.format(DateTimeFormatter.BASIC_ISO_DATE);
+        return eventStoreDirectory + "/" + topicName + "/" + extractSsFromJson(eventData) + "/" + dateString;
     }
 
-    private String buildEventFilePath(Instant timestamp) {
-        return buildEventStoreDirectoryPath(timestamp) + ".events";
+    private String extractSsFromJson(String jsonData) {
+        try {
+            JsonParser parser = new JsonParser();
+            JsonObject jsonObject = parser.parse(jsonData).getAsJsonObject();
+            return jsonObject.get("ss").getAsString();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private String buildEventFilePath(Instant timestamp, String eventData) {
+        return buildEventStoreDirectoryPath(timestamp, eventData) + ".events";
     }
 
     private void saveEventToFile(String directoryPath, String filePath, String eventData) {
