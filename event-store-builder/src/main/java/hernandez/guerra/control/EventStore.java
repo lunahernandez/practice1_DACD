@@ -1,5 +1,6 @@
 package hernandez.guerra.control;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import jakarta.jms.*;
@@ -73,22 +74,30 @@ public class EventStore {
         return eventStoreDirectory + "/" + topicName + "/" + extractSsFromJson(eventData) + "/" + dateString;
     }
 
+
     private String extractSsFromJson(String jsonData) {
         try {
-            JsonParser parser = new JsonParser();
-            JsonObject jsonObject = parser.parse(jsonData).getAsJsonObject();
-            return jsonObject.get("ss").getAsString();
+            JsonElement jsonElement = JsonParser.parseString(jsonData);
+            JsonObject jsonObject = jsonElement.getAsJsonObject();
+            return jsonObject.getAsJsonPrimitive("ss").getAsString();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
+
 
     private String buildEventFilePath(Instant timestamp, String eventData) {
         return buildEventStoreDirectoryPath(timestamp, eventData) + ".events";
     }
 
     private void saveEventToFile(String directoryPath, String filePath, String eventData) {
-        new File(directoryPath).mkdirs();
+        File directory = new File(directoryPath);
+
+        if (!directory.exists()) {
+            if (!directory.mkdirs()) {
+                throw new RuntimeException("Failed to create directory: " + directoryPath);
+            }
+        }
 
         try (PrintWriter writer = new PrintWriter(new FileWriter(filePath, true))) {
             writer.println(eventData);
@@ -96,6 +105,7 @@ public class EventStore {
             throw new RuntimeException(e);
         }
     }
+
 
     private void waitForEvents() {
         try {
