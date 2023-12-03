@@ -13,30 +13,44 @@ import org.apache.activemq.ActiveMQConnection;
 import org.apache.activemq.ActiveMQConnectionFactory;
 public class JMSWeatherStore implements WeatherStore {
     private final String url = ActiveMQConnection.DEFAULT_BROKER_URL;
-    private final String topicName = "prediction.Weather";
+    private final String topicName;
+
+    public JMSWeatherStore(String topicName) {
+        this.topicName = topicName;
+    }
+
     @Override
     public void save(Weather weather) {
-        ConnectionFactory connectionFactory = new ActiveMQConnectionFactory(url);
-        try (Connection connection = connectionFactory.createConnection()) {
-            connection.start();
-
+        try (Connection connection = createConnection()) {
             Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-
             Topic destination = session.createTopic(topicName);
-
             MessageProducer producer = session.createProducer(destination);
-            //TextMessage message = session.createTextMessage("Hello from JMS Publisher!");
-            Gson gson = new GsonBuilder()
-                    .registerTypeAdapter(Instant.class, new InstantTypeAdapter())
-                    .create();
-            String jsonWeather = gson.toJson(weather);
-            TextMessage message = session.createTextMessage(jsonWeather);
+
+            TextMessage message = createTextMessage(weather, session);
             producer.send(message);
 
-            System.out.println("Message sent to topic '" + topicName + "': '" + message.getText() + "'");
         } catch (JMSException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private TextMessage createTextMessage(Weather weather, Session session) throws JMSException {
+        String jsonWeather = convertWeatherToJson(weather);
+        return session.createTextMessage(jsonWeather);
+    }
+
+    private Connection createConnection() throws JMSException {
+        ConnectionFactory connectionFactory = new ActiveMQConnectionFactory(url);
+        Connection connection = connectionFactory.createConnection();
+        connection.start();
+        return connection;
+    }
+
+    private String convertWeatherToJson(Weather weather) {
+        Gson gson = new GsonBuilder()
+                .registerTypeAdapter(Instant.class, new InstantTypeAdapter())
+                .create();
+        return gson.toJson(weather);
     }
 
     @Override
@@ -50,7 +64,7 @@ public class JMSWeatherStore implements WeatherStore {
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() {
 
     }
 

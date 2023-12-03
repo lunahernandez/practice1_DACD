@@ -86,7 +86,7 @@ public class OpenWeatherMapProvider implements WeatherProvider {
         int clouds = weatherInfo.getAsJsonObject("clouds").get("all").getAsInt();
         double windSpeed = weatherInfo.getAsJsonObject("wind").get("speed").getAsDouble();
 
-        return new Weather(Instant.now(), "WeatherProvider/OpenWeatherMap", predictionTime, location,
+        return new Weather(Instant.now(), "WeatherProvider", predictionTime, location,
                 temperature, pop, humidity, clouds, windSpeed)
                 ;
     }
