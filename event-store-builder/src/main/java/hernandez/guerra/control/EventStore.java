@@ -9,17 +9,19 @@ import org.apache.activemq.ActiveMQConnectionFactory;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
 public class EventStore {
+    //TODO define MAX_SUBSCRIPTION_TIME to solve infinite loop
+    //TODO deserialize weather
     private final String brokerUrl;
     private final String topicName;
     private final String clientID;
     private final String eventStoreDirectory;
+    private static final long EVENT_INTERVAL = 6 * 60 * 60 * 1000L;
 
     public EventStore(String brokerUrl, String topicName, String clientID, String eventStoreDirectory) {
         this.brokerUrl = brokerUrl;
@@ -29,55 +31,54 @@ public class EventStore {
     }
 
     public void subscribeToWeatherEvents() {
-        ConnectionFactory connectionFactory = new ActiveMQConnectionFactory(brokerUrl);
-        try (Connection connection = connectionFactory.createConnection()) {
-            connection.setClientID(clientID);
-            connection.start();
-
+        try (Connection connection = createConnection()) {
             Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
             Topic destination = session.createTopic(topicName);
-
             MessageConsumer consumer = session.createDurableSubscriber(destination, clientID);
 
-            consumer.setMessageListener(this::onMessage);
-
-            waitForEvents();
-
+            consumer.setMessageListener(this::processReceivedMessage);
+            while (true) {
+                waitForEvents();
+            }
         } catch (JMSException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private void onMessage(Message message) {
+    private Connection createConnection() throws JMSException {
+        ConnectionFactory connectionFactory = new ActiveMQConnectionFactory(brokerUrl);
+        Connection connection = connectionFactory.createConnection();
+        connection.setClientID(clientID);
+        connection.start();
+        return connection;
+    }
+
+    private void processReceivedMessage(Message message) {
         if (message instanceof TextMessage textMessage) {
-            try {
-                String eventData = textMessage.getText();
-                Instant eventTimestamp = Instant.ofEpochMilli(textMessage.getJMSTimestamp());
-
-                String directoryPath = buildEventStoreDirectoryPath(eventTimestamp, eventData);
-                String filePath = buildEventFilePath(eventTimestamp, eventData);
-
-                saveEventToFile(directoryPath, filePath, eventData);
-                System.out.println("Event stored successfully at: " + filePath);
-
-            } catch (JMSException e) {
-                throw new RuntimeException(e);
-            }
+            saveEventToFile(textMessage);
         }
     }
 
 
-    private String buildEventStoreDirectoryPath(Instant timestamp, String eventData) {
+    private String buildEventStoreDirectoryPath(TextMessage textMessage) {
+        try {
+            String eventData = textMessage.getText();
+            String ss = extractSsFromJson(eventData);
+            return eventStoreDirectory + "/" + topicName + "/" + ss;
+        } catch (JMSException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
+    private static String getDateString(Instant timestamp) {
         LocalDate localDate = LocalDate.ofInstant(timestamp, ZoneOffset.UTC);
-        String dateString = localDate.format(DateTimeFormatter.BASIC_ISO_DATE);
-        return eventStoreDirectory + "/" + topicName + "/" + extractSsFromJson(eventData) + "/" + dateString;
+        return localDate.format(DateTimeFormatter.BASIC_ISO_DATE);
     }
 
 
-    private String extractSsFromJson(String jsonData) {
+    private String extractSsFromJson(String eventData) {
         try {
-            JsonElement jsonElement = JsonParser.parseString(jsonData);
+            JsonElement jsonElement = JsonParser.parseString(eventData);
             JsonObject jsonObject = jsonElement.getAsJsonObject();
             return jsonObject.getAsJsonPrimitive("ss").getAsString();
         } catch (Exception e) {
@@ -85,12 +86,24 @@ public class EventStore {
         }
     }
 
-
-    private String buildEventFilePath(Instant timestamp, String eventData) {
-        return buildEventStoreDirectoryPath(timestamp, eventData) + ".events";
+    private String buildEventFilePath(TextMessage textMessage) {
+        try {
+            Instant eventTimestamp = Instant.ofEpochMilli(textMessage.getJMSTimestamp());
+            String dateString = getDateString(eventTimestamp);
+            return buildEventStoreDirectoryPath(textMessage) + "/" + dateString + ".events";
+        } catch (JMSException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    private void saveEventToFile(String directoryPath, String filePath, String eventData) {
+    private void saveEventToFile(TextMessage textMessage) {
+        String directoryPath = buildEventStoreDirectoryPath(textMessage);
+        String filePath = buildEventFilePath(textMessage);
+        checkIfDirectoryExists(directoryPath);
+        saveEvent(filePath, textMessage);
+    }
+
+    private void checkIfDirectoryExists(String directoryPath) {
         File directory = new File(directoryPath);
 
         if (!directory.exists()) {
@@ -98,20 +111,24 @@ public class EventStore {
                 throw new RuntimeException("Failed to create directory: " + directoryPath);
             }
         }
+    }
 
-        try (PrintWriter writer = new PrintWriter(new FileWriter(filePath, true))) {
-            writer.println(eventData);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+    private void saveEvent(String filePath, TextMessage textMessage) {
+        try (FileWriter writer = new FileWriter(filePath, true)) {
+            String eventData = textMessage.getText();
+            writer.write(eventData + System.lineSeparator());
+            System.out.println("Saved: " + eventData + " in: " + new File(filePath).getAbsolutePath());
+        } catch (IOException | JMSException e) {
+            throw new RuntimeException("Error saving event to file.", e);
         }
     }
 
-
     private void waitForEvents() {
         try {
-            Thread.sleep(1000000);
+            Thread.sleep(EVENT_INTERVAL);
         } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("Thread interrupted while waiting for events.", e);
         }
     }
 
