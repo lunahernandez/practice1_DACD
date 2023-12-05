@@ -1,11 +1,10 @@
 package hernandez.guerra.control;
 
 import hernandez.guerra.exceptions.EventStoreBuilderException;
-import jakarta.jms.JMSException;
 import org.apache.activemq.ActiveMQConnection;
 
 public class Main {
-    public static void main(String[] args) throws EventStoreBuilderException, JMSException {
+    public static void main(String[] args) throws EventStoreBuilderException {
         String brokerUrl = ActiveMQConnection.DEFAULT_BROKER_URL;
         String topicName = "prediction.Weather";
         String eventStoreDirectory = "eventStore";

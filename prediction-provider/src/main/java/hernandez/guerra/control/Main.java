@@ -1,6 +1,6 @@
 package hernandez.guerra.control;
 
-import hernandez.guerra.model.*;
+import hernandez.guerra.model.Location;
 
 import java.util.ArrayList;
 import java.util.List;
