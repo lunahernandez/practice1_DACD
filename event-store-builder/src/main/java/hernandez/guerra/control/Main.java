@@ -1,15 +1,18 @@
 package hernandez.guerra.control;
 
+import hernandez.guerra.exceptions.EventStoreBuilderException;
 import jakarta.jms.JMSException;
 import org.apache.activemq.ActiveMQConnection;
 
 public class Main {
-    public static void main(String[] args) throws JMSException {
+    public static void main(String[] args) throws EventStoreBuilderException, JMSException {
         String brokerUrl = ActiveMQConnection.DEFAULT_BROKER_URL;
         String topicName = "prediction.Weather";
         String eventStoreDirectory = "eventStore";
 
-        EventStore eventStore = new EventStore(brokerUrl, topicName, "eventStoreBuilder", eventStoreDirectory);
-        eventStore.subscribeToEvents();
+
+        EventStore eventStore = new WeatherEventStore(eventStoreDirectory, topicName);
+        EventSubscriber eventSubscriber = new JMSEventSubscriber(brokerUrl, topicName, "eventStoreBuilder", eventStore);
+        eventSubscriber.subscribe();
     }
 }
