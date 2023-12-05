@@ -15,7 +15,6 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
 public class EventStore {
-    //TODO File fileOf(Message message)
     private final String brokerUrl;
     private final String topicName;
     private final String clientID;
@@ -32,7 +31,7 @@ public class EventStore {
         Connection connection = createConnection();
         Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
         Topic destination = session.createTopic(topicName);
-        MessageConsumer consumer = session.createDurableSubscriber(destination, clientID + "-" +topicName);
+        MessageConsumer consumer = session.createDurableSubscriber(destination, clientID + "-" + topicName);
 
         consumer.setMessageListener(this::processReceivedMessage);
     }
@@ -47,16 +46,51 @@ public class EventStore {
 
     private void processReceivedMessage(Message message) {
         if (message instanceof TextMessage textMessage) {
-            saveEventToFile(textMessage);
+            File eventFile = fileOf(textMessage);
+            System.out.println(eventFile);
+            saveEvent(eventFile, textMessage);
+        }
+    }
+
+    private File fileOf(TextMessage textMessage) {
+        String filePath = buildEventFilePath(textMessage);
+        return new File(filePath);
+    }
+
+    private void saveEvent(File file, TextMessage textMessage) {
+        createDirectory(file);
+        writeEventToFile(file, textMessage);
+    }
+
+    private void createDirectory(File file) {
+        File parentDirectory = file.getParentFile();
+
+        if (!parentDirectory.exists()) {
+            if (!parentDirectory.mkdirs()) {
+                throw new RuntimeException("Failed to create directory: " + parentDirectory.getAbsolutePath());
+            }
         }
     }
 
 
-    private String buildEventStoreDirectoryPath(TextMessage textMessage) {
+    private void writeEventToFile(File file, TextMessage textMessage) {
+        try (FileWriter writer = new FileWriter(file, true)) {
+            String eventData = textMessage.getText();
+            writer.write(eventData + System.lineSeparator());
+            System.out.println("Saved: " + eventData + " in: " + file.getAbsolutePath());
+        } catch (IOException | JMSException e) {
+            throw new RuntimeException("Error saving event to file.", e);
+        }
+    }
+
+
+    private String buildEventFilePath(TextMessage textMessage) {
         try {
             String eventData = textMessage.getText();
             String ss = extractSsFromJson(eventData);
-            return eventStoreDirectory + "/" + topicName + "/" + ss;
+            Instant eventTimestamp = Instant.ofEpochMilli(textMessage.getJMSTimestamp());
+            String dateString = getDateString(eventTimestamp);
+            return eventStoreDirectory + "/" + topicName + "/" + ss + "/" + dateString + ".events";
         } catch (JMSException e) {
             throw new RuntimeException(e);
         }
@@ -75,44 +109,6 @@ public class EventStore {
             return jsonObject.getAsJsonPrimitive("ss").getAsString();
         } catch (Exception e) {
             throw new RuntimeException(e);
-        }
-    }
-
-    private String buildEventFilePath(TextMessage textMessage) {
-        try {
-            Instant eventTimestamp = Instant.ofEpochMilli(textMessage.getJMSTimestamp());
-            String dateString = getDateString(eventTimestamp);
-            return buildEventStoreDirectoryPath(textMessage) + "/" + dateString + ".events";
-        } catch (JMSException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private void saveEventToFile(TextMessage textMessage) {
-        String directoryPath = buildEventStoreDirectoryPath(textMessage);
-        String filePath = buildEventFilePath(textMessage);
-        checkIfDirectoryExists(directoryPath);
-        saveEvent(filePath, textMessage);
-    }
-
-    private void checkIfDirectoryExists(String directoryPath) {
-        File directory = new File(directoryPath);
-
-        if (!directory.exists()) {
-            if (!directory.mkdirs()) {
-                throw new RuntimeException("Failed to create directory: " + directoryPath);
-            }
-        }
-    }
-
-
-    private void saveEvent(String filePath, TextMessage textMessage) {
-        try (FileWriter writer = new FileWriter(filePath, true)) {
-            String eventData = textMessage.getText();
-            writer.write(eventData + System.lineSeparator());
-            System.out.println("Saved: " + eventData + " in: " + new File(filePath).getAbsolutePath());
-        } catch (IOException | JMSException e) {
-            throw new RuntimeException("Error saving event to file.", e);
         }
     }
 
