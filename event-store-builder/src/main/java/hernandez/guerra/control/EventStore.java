@@ -15,13 +15,11 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
 public class EventStore {
-    //TODO define MAX_SUBSCRIPTION_TIME to solve infinite loop
-    //TODO deserialize weather
+    //TODO File fileOf(Message message)
     private final String brokerUrl;
     private final String topicName;
     private final String clientID;
     private final String eventStoreDirectory;
-    private static final long EVENT_INTERVAL = 6 * 60 * 60 * 1000L;
 
     public EventStore(String brokerUrl, String topicName, String clientID, String eventStoreDirectory) {
         this.brokerUrl = brokerUrl;
@@ -30,19 +28,13 @@ public class EventStore {
         this.eventStoreDirectory = eventStoreDirectory;
     }
 
-    public void subscribeToWeatherEvents() {
-        try (Connection connection = createConnection()) {
-            Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-            Topic destination = session.createTopic(topicName);
-            MessageConsumer consumer = session.createDurableSubscriber(destination, clientID);
+    public void subscribeToEvents() throws JMSException {
+        Connection connection = createConnection();
+        Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+        Topic destination = session.createTopic(topicName);
+        MessageConsumer consumer = session.createDurableSubscriber(destination, clientID + "-" +topicName);
 
-            consumer.setMessageListener(this::processReceivedMessage);
-            while (true) {
-                waitForEvents();
-            }
-        } catch (JMSException e) {
-            throw new RuntimeException(e);
-        }
+        consumer.setMessageListener(this::processReceivedMessage);
     }
 
     private Connection createConnection() throws JMSException {
@@ -113,6 +105,7 @@ public class EventStore {
         }
     }
 
+
     private void saveEvent(String filePath, TextMessage textMessage) {
         try (FileWriter writer = new FileWriter(filePath, true)) {
             String eventData = textMessage.getText();
@@ -120,15 +113,6 @@ public class EventStore {
             System.out.println("Saved: " + eventData + " in: " + new File(filePath).getAbsolutePath());
         } catch (IOException | JMSException e) {
             throw new RuntimeException("Error saving event to file.", e);
-        }
-    }
-
-    private void waitForEvents() {
-        try {
-            Thread.sleep(EVENT_INTERVAL);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException("Thread interrupted while waiting for events.", e);
         }
     }
 
