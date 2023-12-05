@@ -2,15 +2,16 @@ package hernandez.guerra.control;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import hernandez.guerra.exceptions.PredictionProviderException;
 import hernandez.guerra.model.Location;
 import hernandez.guerra.model.Weather;
+import jakarta.jms.*;
+import org.apache.activemq.ActiveMQConnection;
+import org.apache.activemq.ActiveMQConnectionFactory;
 
 import java.time.Instant;
 import java.util.List;
 
-import jakarta.jms.*;
-import org.apache.activemq.ActiveMQConnection;
-import org.apache.activemq.ActiveMQConnectionFactory;
 public class JMSWeatherStore implements WeatherStore {
     private final String url = ActiveMQConnection.DEFAULT_BROKER_URL;
     private final String topicName;
@@ -20,7 +21,7 @@ public class JMSWeatherStore implements WeatherStore {
     }
 
     @Override
-    public void save(Weather weather) {
+    public void save(Weather weather) throws PredictionProviderException {
         try (Connection connection = createConnection()) {
             Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
             Topic destination = session.createTopic(topicName);
@@ -30,7 +31,7 @@ public class JMSWeatherStore implements WeatherStore {
             producer.send(message);
 
         } catch (JMSException e) {
-            throw new RuntimeException(e);
+            throw new PredictionProviderException(e.getMessage(), e);
         }
     }
 
@@ -67,5 +68,4 @@ public class JMSWeatherStore implements WeatherStore {
     public void close() {
 
     }
-
 }

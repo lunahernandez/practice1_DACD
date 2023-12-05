@@ -1,5 +1,6 @@
 package hernandez.guerra.control;
 
+import hernandez.guerra.exceptions.PredictionProviderException;
 import hernandez.guerra.model.Location;
 import hernandez.guerra.model.Weather;
 
@@ -29,19 +30,26 @@ public class WeatherController {
         TimerTask task = new TimerTask() {
             @Override
             public void run() {
-                updateWeatherData();
-                System.out.println("New query finished at " + Instant.now() + ".");
+                updateWeatherDataTask();
             }
         };
         timer.schedule(task, 0, 6 * 60 * 60 * 1000);
     }
 
-    private void updateWeatherData() {
+    private void updateWeatherDataTask() {
+        try {
+            updateWeatherData();
+        } catch (PredictionProviderException e) {
+            throw new RuntimeException(e);
+        }
+        System.out.println("New query finished at " + Instant.now() + ".");
+    }
+
+    private void updateWeatherData() throws PredictionProviderException {
         for (Location location : locationList) {
             for (Weather weather : weatherProvider.get(location)) {
                 weatherStore.save(weather);
             }
         }
     }
-
 }

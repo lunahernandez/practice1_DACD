@@ -1,14 +1,17 @@
 package hernandez.guerra.control;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import hernandez.guerra.exceptions.PredictionProviderException;
+import hernandez.guerra.model.Location;
+import hernandez.guerra.model.Weather;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
-
-import com.google.gson.*;
-import hernandez.guerra.model.Location;
-import hernandez.guerra.model.Weather;
-
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.time.Instant;
@@ -29,17 +32,17 @@ public class OpenWeatherMapProvider implements WeatherProvider {
     }
 
     @Override
-    public List<Weather> get(Location location) {
+    public List<Weather> get(Location location) throws PredictionProviderException {
         JsonObject jsonObject = getJsonObjectFromOpenWeather(location.lat(), location.lon(), getApiKey());
         return convertJsonToWeatherList(jsonObject, location);
     }
 
-    private JsonObject getJsonObjectFromOpenWeather(String lat, String lon, String apiKey) {
+    private JsonObject getJsonObjectFromOpenWeather(String lat, String lon, String apiKey) throws PredictionProviderException {
         try {
             HttpURLConnection connection = openOpenWeatherConnection(lat, lon, apiKey);
             return getJsonObjectFromConnection(connection);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new PredictionProviderException(e.getMessage(), e);
         }
     }
 
@@ -50,11 +53,11 @@ public class OpenWeatherMapProvider implements WeatherProvider {
         return connection;
     }
 
-    private JsonObject getJsonObjectFromConnection(HttpURLConnection connection) {
+    private JsonObject getJsonObjectFromConnection(HttpURLConnection connection) throws PredictionProviderException {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
             return JsonParser.parseReader(reader).getAsJsonObject();
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new PredictionProviderException(e.getMessage(), e);
         } finally {
             connection.disconnect();
         }
