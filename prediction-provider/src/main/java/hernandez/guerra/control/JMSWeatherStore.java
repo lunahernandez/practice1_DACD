@@ -6,18 +6,18 @@ import hernandez.guerra.exceptions.PredictionProviderException;
 import hernandez.guerra.model.Location;
 import hernandez.guerra.model.Weather;
 import jakarta.jms.*;
-import org.apache.activemq.ActiveMQConnection;
 import org.apache.activemq.ActiveMQConnectionFactory;
 
 import java.time.Instant;
 import java.util.List;
 
 public class JMSWeatherStore implements WeatherStore {
-    private final String url = ActiveMQConnection.DEFAULT_BROKER_URL;
+    private final String url;
     private final String topicName;
 
-    public JMSWeatherStore(String topicName) {
+    public JMSWeatherStore(String topicName, String url) {
         this.topicName = topicName;
+        this.url = url;
     }
 
     @Override

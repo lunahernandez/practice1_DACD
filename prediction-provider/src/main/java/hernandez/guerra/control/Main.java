@@ -1,6 +1,7 @@
 package hernandez.guerra.control;
 
 import hernandez.guerra.model.Location;
+import org.apache.activemq.ActiveMQConnection;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,11 +11,12 @@ public class Main {
 
     public static void main(String[] args) {
         String apikey = args[0];
+        String brokerUrl = ActiveMQConnection.DEFAULT_BROKER_URL;
 
         List<Location> locationList = loadLocations();
 
         WeatherProvider weatherProvider = new OpenWeatherMapProvider(apikey);
-        WeatherStore weatherStore = new JMSWeatherStore("prediction.Weather");
+        WeatherStore weatherStore = new JMSWeatherStore("prediction.Weather", brokerUrl);
         WeatherController weatherController = new WeatherController(weatherProvider, weatherStore, locationList);
 
         weatherController.execute();
