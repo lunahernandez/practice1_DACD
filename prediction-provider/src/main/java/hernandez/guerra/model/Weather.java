@@ -1,6 +1,5 @@
 package hernandez.guerra.model;
 
-
 import java.time.Instant;
 
 public record Weather(Instant ts, String ss, Instant predictionTime, Location location,
