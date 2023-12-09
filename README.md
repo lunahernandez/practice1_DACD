@@ -47,10 +47,12 @@ Note: There are two modules, `prediction-provider` and `event-store-builder`. Co
 
 You can find more information to know how to set the Program Arguments in IntelliJ IDEA
 [here](https://www.jetbrains.com/help/idea/run-debug-configuration-java-application.html).
+
 4. You need to have the **Apache ActiveMQ broker** configured. For more information, go to 
 [Apache ActiveMQ](https://examples.javacodegeeks.com/enterprise-java/jms/apache-activemq-hello-world-example/).
 
 Note: When the broker starts up, it accepts connections on port 61616 by default. Check that the port is not busy.
+
 5. **Run the project:** Click on the run button (green) next to the `main` method or press `Ctrl` `Shift` `F10` in
 both modules.
 
