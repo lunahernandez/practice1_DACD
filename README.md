@@ -29,7 +29,8 @@ consuming the events and storing them in a given directory that follows the next
    ```
 Where `{ss}` represents the data source, and `{YYYYMMDD}` indicates the date of the event.
 
-## Run the Project in IntelliJ IDEA
+## Run the Project
+### Run the Project in IntelliJ IDEA
 
 This project can be run in IntelliJ IDEA by following these steps:
 
@@ -53,6 +54,35 @@ Note: When the broker starts up, it accepts connections on port 61616 by default
 5. **Run the project:** Click on the run button (green) next to the `main` method or press `Ctrl` `Shift` `F10` in
 both modules.
 
+### Run the Project using releases
+
+#### Prerequisites
+- Java Development Kit (JDK) installed.
+- Apache ActiveMQ Broker installed.
+
+#### Steps to Execute
+
+1. **Download and extract the ZIP files:**
+   Download the zip files corresponding to the Prediction Provider and Event Store Builder modules and unzip them.
+
+2. **Configure Apache ActiveMQ:**
+   Follow the instructions [here](https://activemq.apache.org/getting-started) to start the broker.
+
+3.  **Configure the OpenWeatherMap API Key:**
+    Provide the API key as a command line argument.
+4. **Run the project:**
+   - Open a terminal or command prompt.
+   - Navigate to the extracted folders for Event Store Builder and Prediction Provider.
+   - **Run the event-store-builder:**
+     ```
+     java -jar event-store-builder-1.0-SNAPSHOT-jar-with-dependencies.jar your_api_key
+     ```
+   - **Run the prediction provider:**
+     ```
+     java -jar prediction-provider-1.0-SNAPSHOT-jar-with-dependencies.jar your_api_key
+     ```
+
+Recommendations: open three terminals, as control does not return to the user until execution stops.
 ## Design
 ### Design Patterns and Principles Used
 #### Design Patterns
