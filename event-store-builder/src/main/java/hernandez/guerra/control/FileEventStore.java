@@ -16,11 +16,11 @@ import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
-public class WeatherEventStore implements EventStore {
+public class FileEventStore implements EventStore {
     private final String eventStoreDirectory;
     private final String topicName;
 
-    public WeatherEventStore(String eventStoreDirectory, String topicName) {
+    public FileEventStore(String eventStoreDirectory, String topicName) {
         this.eventStoreDirectory = eventStoreDirectory;
         this.topicName = topicName;
     }

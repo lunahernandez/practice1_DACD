@@ -9,7 +9,7 @@ public class Main {
         String topicName = "prediction.Weather";
         String eventStoreDirectory = "eventStore";
 
-        EventStore eventStore = new WeatherEventStore(eventStoreDirectory, topicName);
+        EventStore eventStore = new FileEventStore(eventStoreDirectory, topicName);
         EventSubscriber eventSubscriber = new JMSEventSubscriber(brokerUrl, topicName, "eventStoreBuilder", eventStore);
         eventSubscriber.subscribe();
     }
