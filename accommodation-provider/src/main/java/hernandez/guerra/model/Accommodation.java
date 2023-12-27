@@ -2,7 +2,5 @@ package hernandez.guerra.model;
 
 import java.time.Instant;
 
-
-//TODO add other attributes
-
-public record Accommodation(Instant ts, String ss, String name, double rating, int price, int persons, String type, String url) {}
+public record Accommodation(Instant ts, String ss, String url, String name, String city, String lat, String lng,
+                            int persons, double rating, int totalPrice) {}
