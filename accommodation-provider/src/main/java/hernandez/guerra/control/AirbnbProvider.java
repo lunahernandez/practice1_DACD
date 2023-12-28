@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import hernandez.guerra.exceptions.AccommodationProviderException;
 import hernandez.guerra.model.Accommodation;
 import hernandez.guerra.model.LocationArea;
 
@@ -31,14 +32,13 @@ public class AirbnbProvider implements AccommodationProvider {
     }
 
     @Override
-    public List<Accommodation> get(LocationArea locationArea) {
+    public List<Accommodation> get(LocationArea locationArea) throws AccommodationProviderException {
         Instant now = Instant.now();
         Instant checkInDate = calculateCheckInDate(now);
         Instant checkOutDate = checkInDate.plus(5, ChronoUnit.DAYS);
 
         JsonObject jsonObject = getJsonObjectFromAccommodationProvider(
-                locationArea.neLat(), locationArea.neLng(),
-                locationArea.swLat(), locationArea.swLng(),
+                locationArea.neLat(), locationArea.neLng(), locationArea.swLat(), locationArea.swLng(),
                 checkInDate, checkOutDate, apiKey
         );
         return convertJsonToAccommodationList(jsonObject);
@@ -56,15 +56,14 @@ public class AirbnbProvider implements AccommodationProvider {
     private JsonObject getJsonObjectFromAccommodationProvider(
             String neLat, String neLng, String swLat, String swLng,
             Instant checkInDate, Instant checkOutDate, String apiKey
-    ) {
+    ) throws AccommodationProviderException {
         try {
             HttpURLConnection connection = openAccommodationProviderConnection(neLat, neLng, swLat, swLng,
                     checkInDate, checkOutDate, apiKey);
             return getJsonObjectFromConnection(connection);
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new AccommodationProviderException(e.getMessage(), e);
         }
-        return null;
     }
 
     private HttpURLConnection openAccommodationProviderConnection(
@@ -81,15 +80,14 @@ public class AirbnbProvider implements AccommodationProvider {
         return connection;
     }
 
-    private JsonObject getJsonObjectFromConnection(HttpURLConnection connection) {
+    private JsonObject getJsonObjectFromConnection(HttpURLConnection connection) throws AccommodationProviderException {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
             return JsonParser.parseReader(reader).getAsJsonObject();
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new AccommodationProviderException(e.getMessage(), e);
         } finally {
             connection.disconnect();
         }
-        return null;
     }
 
     private URL getUrl(String neLat, String neLng, String swLat, String swLng, Instant checkInDate, Instant checkOutDate)
