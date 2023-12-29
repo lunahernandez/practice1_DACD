@@ -6,11 +6,13 @@ import org.apache.activemq.ActiveMQConnection;
 public class Main {
     public static void main(String[] args) throws EventStoreBuilderException {
         String brokerUrl = ActiveMQConnection.DEFAULT_BROKER_URL;
-        String topicName = "prediction.Weather";
+        String weatherTopicName = "prediction.Weather";
+        String accommodationTopicName = "prediction.Accommodation";
         String eventStoreDirectory = "eventStore";
 
-        EventStore eventStore = new FileEventStore(eventStoreDirectory, topicName);
-        EventSubscriber eventSubscriber = new JMSEventSubscriber(brokerUrl, topicName, "eventStoreBuilder", eventStore);
+        EventStore eventStore = new FileEventStore(eventStoreDirectory);
+        EventSubscriber eventSubscriber = new JMSEventSubscriber(brokerUrl, weatherTopicName, accommodationTopicName, "eventStoreBuilder", eventStore);
+        System.out.println("Creados");
         eventSubscriber.subscribe();
     }
 }
