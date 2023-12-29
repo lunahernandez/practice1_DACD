@@ -35,17 +35,26 @@ public class AccommodationController {
     }
     private void updateAccommodationDataTask() {
         try {
-            updateWeatherData();
+            updateAccommodationData();
         } catch (AccommodationProviderException e) {
             throw new RuntimeException(e);
         }
         System.out.println("New query finished at " + Instant.now() + ".");
     }
 
-    private void updateWeatherData() throws AccommodationProviderException {
+    private void updateAccommodationData() throws AccommodationProviderException {
         for (Location location : locationList) {
-            for (Accommodation accommodation : accommodationProvider.get(location.locationArea())) {
-                accommodationStore.save(accommodation);
+            try {
+                Thread.sleep(12000);
+                System.out.println("Starting " + location.name());
+
+                for (Accommodation accommodation : accommodationProvider.get(location.locationArea())) {
+                    accommodationStore.save(accommodation);
+                    System.out.println(accommodation.city() + " saved");
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new AccommodationProviderException("Error waiting between requests.", e);
             }
         }
     }
