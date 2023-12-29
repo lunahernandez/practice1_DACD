@@ -1,24 +1,42 @@
 package hernandez.guerra.control;
 
-import hernandez.guerra.model.Accommodation;
+import hernandez.guerra.exceptions.AccommodationProviderException;
+import hernandez.guerra.model.Location;
 import hernandez.guerra.model.LocationArea;
+import org.apache.activemq.ActiveMQConnection;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
 
 public class Main {
     public static void main(String[] args) {
         String apiKey = args[0];
-        LocationArea granCanaria = new LocationArea("28.01", "-15.53", "27.99", "-15.58", "GG");
-        LocationArea fuerteventura = new LocationArea("28.40", "-13.85", "28.37", "-13.89", "FTV");
-        LocationArea lanzarote = new LocationArea("29.12", "-13.54", "29.11", "-13.57", "LZT");
-        LocationArea laGraciosa = new LocationArea("29.24", "-13.50", "29.23", "-13.51", "LGR");
-        LocationArea tenerife = new LocationArea("28.04", "-16.59", "28.02", "-16.62", "TF");
-        LocationArea laPalma = new LocationArea("28.76", "-17.74", "28.73", "-17.76", "LP");
-        LocationArea laGomera = new LocationArea("28.17", "-17.31", "28.16", "-17.34", "LG");
-        LocationArea elHierro = new LocationArea("27.72", "-17.97", "27.70", "-18.00", "EH");
+        String brokerUrl = ActiveMQConnection.DEFAULT_BROKER_URL;
 
+        List<Location> locationList = readLocations();
         AccommodationProvider accommodationProvider = new AirbnbProvider(apiKey);
-        List<Accommodation> accommodations = accommodationProvider.get(elHierro);
-        System.out.println(accommodations);
+        AccommodationStore accommodationStore = new JMSAccommodationStore("prediction.Accommodation", brokerUrl);
+        AccommodationController accommodationController = new AccommodationController(accommodationProvider, accommodationStore, locationList);
+        accommodationController.execute();
+    }
+    private static List<Location> readLocations() {
+        List<Location> locationList = new ArrayList<>();
+
+        try (Scanner scanner = new Scanner(new File("locations.tsv"))) {
+            if (scanner.hasNextLine()) scanner.nextLine();
+
+            while (scanner.hasNextLine()) {
+                String[] data = scanner.nextLine().split("\t");
+                locationList.add(new Location(data[0], data[1], data[2],
+                        new LocationArea(data[3], data[4], data[5], data[6], data[7])));
+            }
+
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(new AccommodationProviderException(e.getMessage(), e));
+        }
+        return locationList;
     }
 }
