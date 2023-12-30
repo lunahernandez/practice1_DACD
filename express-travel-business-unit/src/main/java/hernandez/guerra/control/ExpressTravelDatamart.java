@@ -1,5 +1,7 @@
 package hernandez.guerra.control;
 
+import jakarta.jms.TextMessage;
+
 public interface ExpressTravelDatamart {
-    public void insertEvent(String topic, String data);
+    void update(TextMessage textMessage, String topicName);
 }
