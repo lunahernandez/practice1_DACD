@@ -1,15 +1,21 @@
 package hernandez.guerra.control;
 
+import hernandez.guerra.exceptions.ExpressTravelBusinessUnitException;
+
 import java.sql.*;
 
 public record ExpressTravelSQLiteDatamart(String dbPath) {
     //TODO initialize from datalake
 
     public ExpressTravelSQLiteDatamart {
-        createTables();
+        try {
+            createTables();
+        } catch (ExpressTravelBusinessUnitException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    private void initialize() {
+    private void initialize() throws ExpressTravelBusinessUnitException {
         try (Connection connection = connect()) {
             Statement statement = connection.createStatement();
 
@@ -21,11 +27,11 @@ public record ExpressTravelSQLiteDatamart(String dbPath) {
             statement.execute(createTableSQL);
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new ExpressTravelBusinessUnitException(e.getMessage(), e);
         }
     }
 
-    private void createTables() {
+    private void createTables() throws ExpressTravelBusinessUnitException {
         try (Connection connection = connect()) {
             Statement statement = connection.createStatement();
 
@@ -33,7 +39,7 @@ public record ExpressTravelSQLiteDatamart(String dbPath) {
             createAccommodationTable(statement);
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new ExpressTravelBusinessUnitException(e.getMessage(), e);
         }
     }
 
@@ -66,7 +72,7 @@ public record ExpressTravelSQLiteDatamart(String dbPath) {
     }
 
     public void insertWeatherPrediction(String locationName, String predictionTime, double temp,
-                                        double pop, int humidity, int clouds, double windSpeed) {
+                                        double pop, int humidity, int clouds, double windSpeed) throws ExpressTravelBusinessUnitException {
         try (Connection connection = connect()) {
             String insertSQL = "INSERT INTO weatherPredictions (predictionTime, locationName, temp, pop, humidity, clouds, windSpeed) " +
                     "VALUES (?, ?, ?, ?, ?, ?, ?)";
@@ -81,13 +87,13 @@ public record ExpressTravelSQLiteDatamart(String dbPath) {
                 preparedStatement.executeUpdate();
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new ExpressTravelBusinessUnitException(e.getMessage(), e);
         }
     }
 
 
     public void insertAccommodation(String locationName, String url, String name, String city,
-                                    String lat, String lng, int persons, double rating, int totalPrice) {
+                                    String lat, String lng, int persons, double rating, int totalPrice) throws ExpressTravelBusinessUnitException {
         try (Connection connection = connect()) {
             String insertSQL = "INSERT INTO accommodations (locationName, url, name, city, lat, lng, persons, rating, totalPrice) " +
                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
@@ -104,18 +110,18 @@ public record ExpressTravelSQLiteDatamart(String dbPath) {
                 preparedStatement.executeUpdate();
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new ExpressTravelBusinessUnitException(e.getMessage(), e);
         }
     }
 
 
-    private Connection connect() {
+    private Connection connect() throws ExpressTravelBusinessUnitException {
         Connection conn = null;
         try {
             String url = "jdbc:sqlite:" + dbPath;
             conn = DriverManager.getConnection(url);
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new ExpressTravelBusinessUnitException(e.getMessage(), e);
         }
         return conn;
     }
