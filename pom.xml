@@ -12,6 +12,7 @@
         <module>datalake-builder</module>
         <module>prediction-provider</module>
         <module>accommodation-provider</module>
+        <module>express-travel-business-unit</module>
     </modules>
 
     <properties>
