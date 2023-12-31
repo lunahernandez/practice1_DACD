@@ -48,7 +48,7 @@ public class AccommodationController {
                 Thread.sleep(12000);
                 System.out.println("Starting " + location.name());
 
-                for (Accommodation accommodation : accommodationProvider.get(location.locationArea())) {
+                for (Accommodation accommodation : accommodationProvider.get(location)) {
                     accommodationStore.save(accommodation);
                     System.out.println(accommodation.city() + " saved");
                 }

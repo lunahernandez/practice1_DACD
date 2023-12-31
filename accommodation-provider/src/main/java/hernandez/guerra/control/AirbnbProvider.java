@@ -6,6 +6,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import hernandez.guerra.exceptions.AccommodationProviderException;
 import hernandez.guerra.model.Accommodation;
+import hernandez.guerra.model.Location;
 import hernandez.guerra.model.LocationArea;
 
 import java.io.BufferedReader;
@@ -32,16 +33,17 @@ public class AirbnbProvider implements AccommodationProvider {
     }
 
     @Override
-    public List<Accommodation> get(LocationArea locationArea) throws AccommodationProviderException {
+    public List<Accommodation> get(Location location) throws AccommodationProviderException {
         Instant now = Instant.now();
         Instant checkInDate = calculateCheckInDate(now);
         Instant checkOutDate = checkInDate.plus(5, ChronoUnit.DAYS);
+        LocationArea locationArea = location.locationArea();
 
         JsonObject jsonObject = getJsonObjectFromAccommodationProvider(
                 locationArea.neLat(), locationArea.neLng(), locationArea.swLat(), locationArea.swLng(),
                 checkInDate, checkOutDate, apiKey
         );
-        return convertJsonToAccommodationList(jsonObject);
+        return convertJsonToAccommodationList(jsonObject, location);
     }
 
     private Instant calculateCheckInDate(Instant now) {
@@ -102,26 +104,40 @@ public class AirbnbProvider implements AccommodationProvider {
         return new URL(apiUrl);
     }
 
-    private List<Accommodation> convertJsonToAccommodationList(JsonObject jsonObject) {
+    private List<Accommodation> convertJsonToAccommodationList(JsonObject jsonObject, Location location) {
         List<Accommodation> accommodationList = new ArrayList<>();
         JsonArray accommodationListArray = jsonObject.getAsJsonArray("results");
-        for (JsonElement element : accommodationListArray)
-            accommodationList.add(createAccommodationFromJson(element.getAsJsonObject()));
+
+        for (JsonElement element : accommodationListArray) {
+            Accommodation accommodation = createAccommodationFromJson(element.getAsJsonObject(), location);
+            if (accommodation != null) {
+                accommodationList.add(accommodation);
+            }
+        }
 
         return accommodationList;
     }
 
-    private Accommodation createAccommodationFromJson(JsonObject accommodationInfo) {
-        String url = accommodationInfo.get("url").getAsString();
-        String name = accommodationInfo.get("name").getAsString();
-        String city = accommodationInfo.get("city").getAsString();
-        String lat = accommodationInfo.get("lat").getAsString();
-        String lng = accommodationInfo.get("lng").getAsString();
-        int persons = accommodationInfo.get("persons").getAsInt();
-        double rating = accommodationInfo.get("rating").getAsDouble();
-        int totalPrice = accommodationInfo.getAsJsonObject("price").get("total").getAsInt();
-        return new Accommodation(Instant.now(), "AccommodationProvider", url, name, city, lat, lng,
-                persons, rating, totalPrice);
+    private Accommodation createAccommodationFromJson(JsonObject accommodationInfo, Location location) {
+        String url = getStringOrDefault(accommodationInfo, "url");
+        String name = getStringOrDefault(accommodationInfo, "name");
+        String city = getStringOrDefault(accommodationInfo, "city");
+        String lat = getStringOrDefault(accommodationInfo, "lat");
+        String lng = getStringOrDefault(accommodationInfo, "lng");
+        double rating = accommodationInfo.has("rating") ? accommodationInfo.get("rating").getAsDouble() : 0.0;
+        int totalPrice = accommodationInfo.has("price") ? accommodationInfo.getAsJsonObject("price").get("total").getAsInt() : 0;
+
+        if (url.isEmpty() || name.isEmpty() || city.isEmpty() || lat.isEmpty() || lng.isEmpty()) {
+            return null;
+        }
+
+        return new Accommodation(Instant.now(), "AccommodationProvider", url, name, location, city, lat, lng, rating, totalPrice);
     }
+
+    private String getStringOrDefault(JsonObject jsonObject, String key) {
+        JsonElement element = jsonObject.get(key);
+        return (element != null && !element.isJsonNull()) ? element.getAsString() : "";
+    }
+
 
 }
