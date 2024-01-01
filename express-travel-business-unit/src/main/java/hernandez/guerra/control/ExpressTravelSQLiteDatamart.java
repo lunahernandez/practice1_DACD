@@ -10,6 +10,8 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public record ExpressTravelSQLiteDatamart(String dbPath) implements ExpressTravelDatamart{
     //TODO initialize from datalake
@@ -64,6 +66,7 @@ public record ExpressTravelSQLiteDatamart(String dbPath) implements ExpressTrave
     public void initialize(String weatherTopicName, String accommodationTopicName, DatamartInitializer datamartInitializer)
             throws ExpressTravelBusinessUnitException {
         try (Connection connection = connect()) {
+            clearDatamart(connection);
 
             File weatherFile = datamartInitializer.findLatestEventFile(weatherTopicName);
             File accommodationFile = datamartInitializer.findLatestEventFile(accommodationTopicName);
@@ -83,16 +86,44 @@ public record ExpressTravelSQLiteDatamart(String dbPath) implements ExpressTrave
         }
     }
 
+    private void clearDatamart(Connection connection) throws SQLException {
+        try (Statement statement = connection.createStatement()) {
+            statement.executeUpdate("DELETE FROM weatherPredictions;");
+            statement.executeUpdate("DELETE FROM accommodations;");
+        }
+    }
     private void processEventFile(File eventFile, String tableName, Connection connection) throws ExpressTravelBusinessUnitException {
         try (BufferedReader reader = new BufferedReader(new FileReader(eventFile))) {
             String line;
+            List<String> recentEvents = new ArrayList<>();
+            String lastTimestamp = null;
+
             while ((line = reader.readLine()) != null) {
-                System.out.println(line);
-                insertEventIntoTable(line, tableName, connection);
+                String currentTimestamp = extractDateAndTime(line);
+                System.out.println(currentTimestamp);
+
+                if (lastTimestamp == null || currentTimestamp.compareTo(lastTimestamp) > 0) {
+                    lastTimestamp = currentTimestamp;
+                    recentEvents.clear();
+                }
+                System.out.println(lastTimestamp);
+
+                recentEvents.add(line);
             }
+
+            for (String eventData : recentEvents) {
+                insertEventIntoTable(eventData, tableName, connection);
+            }
+
         } catch (IOException e) {
             throw new ExpressTravelBusinessUnitException(e.getMessage(), e);
         }
+    }
+
+    private String extractDateAndTime(String eventData) {
+        JsonObject json = JsonParser.parseString(eventData).getAsJsonObject();
+        String fullTimestamp = json.get("ts").getAsString();
+        return fullTimestamp.substring(0, 13);
     }
 
     private void insertEventIntoTable(String eventData, String tableName, Connection connection) throws ExpressTravelBusinessUnitException {
