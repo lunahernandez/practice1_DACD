@@ -119,25 +119,32 @@ public class AirbnbProvider implements AccommodationProvider {
     }
 
     private Accommodation createAccommodationFromJson(JsonObject accommodationInfo, Location location) {
-        String url = getStringOrDefault(accommodationInfo, "url");
-        String name = getStringOrDefault(accommodationInfo, "name");
-        String city = getStringOrDefault(accommodationInfo, "city");
-        String lat = getStringOrDefault(accommodationInfo, "lat");
-        String lng = getStringOrDefault(accommodationInfo, "lng");
-        double rating = accommodationInfo.has("rating") ? accommodationInfo.get("rating").getAsDouble() : 0.0;
-        int totalPrice = accommodationInfo.has("price") ? accommodationInfo.getAsJsonObject("price").get("total").getAsInt() : 0;
+        List<String> generalAttributes = obtainGeneralAccommodationInfo(accommodationInfo);
 
-        if (url.isEmpty() || name.isEmpty() || city.isEmpty() || lat.isEmpty() || lng.isEmpty()) {
-            return null;
-        }
-
-        return new Accommodation(Instant.now(), "AccommodationProvider", url, name, location, city, lat, lng, rating, totalPrice);
+        return (generalAttributes.contains("") || isPriceInvalid(accommodationInfo))
+                ? null
+                : new Accommodation(Instant.now(), "AccommodationProvider", generalAttributes.get(0),
+                generalAttributes.get(1), location, generalAttributes.get(2), generalAttributes.get(3),
+                generalAttributes.get(4),
+                accommodationInfo.has("reviewsCount") ?accommodationInfo.get("reviewsCount").getAsInt() : 0,
+                accommodationInfo.has("rating") ? accommodationInfo.get("rating").getAsDouble() : 0.0,
+                accommodationInfo.getAsJsonObject("price").get("total").getAsInt());
     }
 
-    private String getStringOrDefault(JsonObject jsonObject, String key) {
-        JsonElement element = jsonObject.get(key);
-        return (element != null && !element.isJsonNull()) ? element.getAsString() : "";
+    private List<String> obtainGeneralAccommodationInfo(JsonObject accommodationInfo) {
+        return List.of(
+                accommodationInfo.has("url") ? accommodationInfo.get("url").getAsString() : "",
+                accommodationInfo.has("name") ? accommodationInfo.get("name").getAsString() : "",
+                accommodationInfo.has("city") ? accommodationInfo.get("city").getAsString() : "",
+                accommodationInfo.has("lat") ? accommodationInfo.get("lat").getAsString() : "",
+                accommodationInfo.has("lng") ? accommodationInfo.get("lng").getAsString() : ""
+        );
     }
 
+
+    private boolean isPriceInvalid(JsonObject accommodationInfo) {
+        JsonElement priceElement = accommodationInfo.get("price");
+        return priceElement == null || priceElement.isJsonNull() || priceElement.getAsJsonObject().get("total") == null;
+    }
 
 }
