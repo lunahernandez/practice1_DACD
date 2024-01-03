@@ -3,6 +3,7 @@ package hernandez.guerra.control;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import hernandez.guerra.exceptions.ExpressTravelBusinessUnitException;
+import jakarta.jms.JMSException;
 import jakarta.jms.TextMessage;
 
 import java.io.BufferedReader;
@@ -12,6 +13,7 @@ import java.io.IOException;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public record ExpressTravelSQLiteDatamart(String dbPath) implements ExpressTravelDatamart{
     //TODO initialize from datalake
@@ -152,7 +154,6 @@ public record ExpressTravelSQLiteDatamart(String dbPath) implements ExpressTrave
             } catch (SQLException e) {
                 throw new ExpressTravelBusinessUnitException(e.getMessage(), e);
             }
-
     }
     private static void setInsertWeatherParameters(PreparedStatement preparedStatement, JsonObject json) throws SQLException {
         preparedStatement.setString(1, json.get("predictionTime").getAsString());
@@ -189,28 +190,6 @@ public record ExpressTravelSQLiteDatamart(String dbPath) implements ExpressTrave
     }
 
 
-
-    public void insertWeatherPrediction(String locationName, String predictionTime, double temp,
-                                        double pop, int humidity, int clouds, double windSpeed) throws ExpressTravelBusinessUnitException {
-        try (Connection connection = connect()) {
-            String insertSQL = "INSERT INTO weatherPredictions (predictionTime, locationName, temp, pop, humidity, clouds, windSpeed) " +
-                    "VALUES (?, ?, ?, ?, ?, ?, ?)";
-            try (PreparedStatement preparedStatement = connection.prepareStatement(insertSQL)) {
-                preparedStatement.setString(1, predictionTime);
-                preparedStatement.setString(2, locationName);
-                preparedStatement.setDouble(3, temp);
-                preparedStatement.setDouble(4, pop);
-                preparedStatement.setInt(5, humidity);
-                preparedStatement.setInt(6, clouds);
-                preparedStatement.setDouble(7, windSpeed);
-                preparedStatement.executeUpdate();
-            }
-        } catch (SQLException e) {
-            throw new ExpressTravelBusinessUnitException(e.getMessage(), e);
-        }
-    }
-
-
     private Connection connect() throws ExpressTravelBusinessUnitException {
         Connection conn;
         try {
@@ -223,8 +202,32 @@ public record ExpressTravelSQLiteDatamart(String dbPath) implements ExpressTrave
     }
 
     @Override
-    public void update(TextMessage textMessage, String topicName) {
+    public void update(TextMessage textMessage, String topicName) throws ExpressTravelBusinessUnitException {
+        try (Connection connection = connect()) {
 
+            if (Objects.equals(topicName, "prediction.Weather")) {
+                insertWeatherPrediction(textMessage.getText(), connection);
+                deleteOldData(connection, "prediction.Weather", extractDateAndTime(textMessage.getText()));
+            }
+
+            if (Objects.equals(topicName, "prediction.Accommodation")) {
+                insertAccommodation(textMessage.getText(), connection);
+                deleteOldData(connection, "prediction.Accommodation", extractDateAndTime(textMessage.getText()));
+            }
+
+        } catch (SQLException | JMSException e) {
+            throw new ExpressTravelBusinessUnitException(e.getMessage(), e);
+        }
     }
+
+    private void deleteOldData(Connection connection, String tableName, String eventTimestamp) throws SQLException {
+        String deleteSQL = "DELETE FROM " + tableName + " WHERE SUBSTR(ts, 1, 13) < ?";
+
+        try (PreparedStatement preparedStatement = connection.prepareStatement(deleteSQL)) {
+            preparedStatement.setString(1, eventTimestamp.substring(0, 13));
+            preparedStatement.executeUpdate();
+        }
+    }
+
 }
 
