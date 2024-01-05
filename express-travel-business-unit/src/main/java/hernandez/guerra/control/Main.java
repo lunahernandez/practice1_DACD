@@ -21,7 +21,7 @@ public class Main {
         eventSubscriber.subscribe();
 
 
-        CommandLineInterface commandLineInterface = new CommandLineInterface(dataMartInitializer, datamart);
+        CommandLineInterface commandLineInterface = new CommandLineInterface(datamart);
         commandLineInterface.run();
 
     }

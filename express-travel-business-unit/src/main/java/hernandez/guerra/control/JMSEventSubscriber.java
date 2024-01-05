@@ -29,12 +29,10 @@ public class JMSEventSubscriber implements EventSubscriber {
             Topic destination1 = session.createTopic(topicName1);
             MessageConsumer consumer1 = session.createDurableSubscriber(destination1, clientID + "-" + topicName1);
             setupMessageListener(consumer1, topicName1);
-            System.out.println("consumer1");
 
             Topic destination2 = session.createTopic(topicName2);
             MessageConsumer consumer2 = session.createDurableSubscriber(destination2, clientID + "-" + topicName2);
             setupMessageListener(consumer2, topicName2);
-            System.out.println("consumer2");
 
         } catch (JMSException e) {
             throw new ExpressTravelBusinessUnitException(e.getMessage(), e);
@@ -44,7 +42,6 @@ public class JMSEventSubscriber implements EventSubscriber {
     private void setupMessageListener(MessageConsumer consumer, String topicName) throws JMSException {
         consumer.setMessageListener(message -> {
             try {
-                System.out.println("Processing message with topic: " + topicName);
                 processReceivedMessage(message, topicName);
             } catch (ExpressTravelBusinessUnitException e) {
                 throw new RuntimeException(e);

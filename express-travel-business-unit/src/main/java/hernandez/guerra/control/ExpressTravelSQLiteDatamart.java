@@ -3,6 +3,8 @@ package hernandez.guerra.control;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import hernandez.guerra.exceptions.ExpressTravelBusinessUnitException;
+import hernandez.guerra.model.AccommodationData;
+import hernandez.guerra.model.WeatherData;
 import jakarta.jms.JMSException;
 import jakarta.jms.TextMessage;
 
@@ -11,13 +13,9 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 public record ExpressTravelSQLiteDatamart(String dbPath) implements ExpressTravelDatamart{
-    //TODO initialize from datalake
-
     public ExpressTravelSQLiteDatamart {
         try {
             createTables();
@@ -60,6 +58,7 @@ public record ExpressTravelSQLiteDatamart(String dbPath) implements ExpressTrave
                 "city TEXT," +
                 "lat TEXT," +
                 "lng TEXT," +
+                "reviewsCount INTEGER," +
                 "rating REAL," +
                 "totalPrice INTEGER" +
                 ");");
@@ -102,14 +101,11 @@ public record ExpressTravelSQLiteDatamart(String dbPath) implements ExpressTrave
 
             while ((line = reader.readLine()) != null) {
                 String currentTimestamp = extractDateAndTime(line);
-                System.out.println(currentTimestamp);
 
                 if (lastTimestamp == null || currentTimestamp.compareTo(lastTimestamp) > 0) {
                     lastTimestamp = currentTimestamp;
                     recentEvents.clear();
                 }
-                System.out.println(lastTimestamp);
-
                 recentEvents.add(line);
             }
 
@@ -167,8 +163,8 @@ public record ExpressTravelSQLiteDatamart(String dbPath) implements ExpressTrave
 
     private void insertAccommodation(String eventData, Connection connection) throws ExpressTravelBusinessUnitException {
             JsonObject json = JsonParser.parseString(eventData).getAsJsonObject();
-            String insertSQL = "INSERT INTO accommodations (locationName, url, name, city, lat, lng, rating, totalPrice) " +
-                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+            String insertSQL = "INSERT INTO accommodations (locationName, url, name, city, lat, lng, reviewsCount, rating, totalPrice) " +
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
             try (PreparedStatement preparedStatement = connection.prepareStatement(insertSQL)) {
                 setInsertAccommodationParameters(preparedStatement, json);
@@ -185,8 +181,9 @@ public record ExpressTravelSQLiteDatamart(String dbPath) implements ExpressTrave
         preparedStatement.setString(4, json.get("city").getAsString());
         preparedStatement.setString(5, json.get("lat").getAsString());
         preparedStatement.setString(6, json.get("lng").getAsString());
-        preparedStatement.setDouble(7, json.get("rating").getAsDouble());
-        preparedStatement.setInt(8, json.get("totalPrice").getAsInt());
+        preparedStatement.setInt(7, json.get("reviewsCount").getAsInt());
+        preparedStatement.setDouble(8, json.get("rating").getAsDouble());
+        preparedStatement.setInt(9, json.get("totalPrice").getAsInt());
     }
 
 
@@ -228,6 +225,95 @@ public record ExpressTravelSQLiteDatamart(String dbPath) implements ExpressTrave
             preparedStatement.executeUpdate();
         }
     }
+
+    @Override
+    public List<WeatherData> getWeather(String location) throws ExpressTravelBusinessUnitException {
+        List<WeatherData> result = new ArrayList<>();
+
+        try (Connection connection = connect()) {
+            String sql = "SELECT * FROM weatherPredictions WHERE locationName = ?";
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                statement.setString(1, location);
+
+                try (ResultSet resultSet = statement.executeQuery()) {
+                    while (resultSet.next()) {
+                        String locationName = resultSet.getString("locationName");
+                        double temp = resultSet.getDouble("temp");
+                        double pop = resultSet.getDouble("pop");
+                        int humidity = resultSet.getInt("humidity");
+                        int clouds = resultSet.getInt("clouds");
+                        double windSpeed = resultSet.getDouble("windSpeed");
+
+                        WeatherData weatherData = new WeatherData(locationName, temp, pop, humidity, clouds, windSpeed);
+                        result.add(weatherData);
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            throw new ExpressTravelBusinessUnitException(e.getMessage(), e);
+        } catch (ExpressTravelBusinessUnitException e) {
+            throw new RuntimeException(e);
+        }
+
+        return result;
+    }
+
+    @Override
+    public List<AccommodationData> getAccommodation(String location) throws ExpressTravelBusinessUnitException {
+        List<AccommodationData> result = new ArrayList<>();
+
+        try (Connection connection = connect()) {
+            String sql = "SELECT * FROM accommodations WHERE locationName = ?";
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                statement.setString(1, location);
+
+                try (ResultSet resultSet = statement.executeQuery()) {
+                    while (resultSet.next()) {
+                        String locationName = resultSet.getString("locationName");
+                        String url = resultSet.getString("url");
+                        String name = resultSet.getString("name");
+                        String city = resultSet.getString("city");
+                        String lat = resultSet.getString("lat");
+                        String lng = resultSet.getString("lng");
+                        int reviewsCount = resultSet.getInt("reviewsCount");
+                        double rating = resultSet.getDouble("rating");
+                        int totalPrice = resultSet.getInt("totalPrice");
+
+                        AccommodationData accommodationData = new AccommodationData(locationName, url, name, city,
+                                lat, lng, reviewsCount, rating, totalPrice);
+                        result.add(accommodationData);
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            throw new ExpressTravelBusinessUnitException(e.getMessage(), e);
+        } catch (ExpressTravelBusinessUnitException e) {
+            throw new RuntimeException(e);
+        }
+
+        return result;
+    }
+
+    public Set<String> getAllLocations(String tableName) throws ExpressTravelBusinessUnitException {
+        Set<String> locations = new HashSet<>();
+
+        try (Connection connection = connect()) {
+            String sql = "SELECT DISTINCT locationName FROM " + tableName;
+            try (PreparedStatement statement = connection.prepareStatement(sql);
+                 ResultSet resultSet = statement.executeQuery()) {
+
+                while (resultSet.next()) {
+                    String locationName = resultSet.getString("locationName");
+                    locations.add(locationName);
+                }
+            }
+        } catch (SQLException e) {
+            throw new ExpressTravelBusinessUnitException(e.getMessage(), e);
+        }
+
+        return locations;
+    }
+
 
 }
 
