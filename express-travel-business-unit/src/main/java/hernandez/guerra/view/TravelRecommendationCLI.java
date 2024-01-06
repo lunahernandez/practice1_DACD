@@ -2,8 +2,11 @@ package hernandez.guerra.view;
 
 import hernandez.guerra.control.TravelRecommendationLogic;
 import hernandez.guerra.exceptions.ExpressTravelBusinessUnitException;
+import hernandez.guerra.model.AccommodationData;
+import hernandez.guerra.model.WeatherData;
 
 import java.util.InputMismatchException;
+import java.util.Map;
 import java.util.Scanner;
 
 public class TravelRecommendationCLI {
@@ -39,6 +42,7 @@ public class TravelRecommendationCLI {
         Scanner scanner = new Scanner(System.in);
 
         while (true) {
+            showWelcome();
             displayMenu();
             int choice = getUserChoice(scanner);
 
@@ -46,15 +50,21 @@ public class TravelRecommendationCLI {
                 case 1:
                     setDefaultValues();
                     setPreferences();
-                    recommendationLogic.showTheBestOption();
+                    Map<Map.Entry<AccommodationData, WeatherData>, Double> bestDefaultOption =
+                            recommendationLogic.getTheBestOption();
+                    showBestOption(bestDefaultOption);
                     break;
                 case 2:
                     setUserValues(scanner);
                     setPreferences();
-                    recommendationLogic.showTheBestOption();
+                    Map<Map.Entry<AccommodationData, WeatherData>, Double> bestUserOption =
+                            recommendationLogic.getTheBestOption();
+                    showBestOption(bestUserOption);
                     break;
                 case 3:
-                    recommendationLogic.showRecommendations();
+                    Map<Map.Entry<AccommodationData, WeatherData>, Double> recommendations =
+                            recommendationLogic.getRecommendations();
+                    showRecommendations(recommendations);
                     break;
                 case 4:
                     System.out.println("Leaving...");
@@ -65,6 +75,10 @@ public class TravelRecommendationCLI {
             }
         }
 
+    }
+    private static void showWelcome() {
+        System.out.println("\nWelcome to ExpressTravel App! If you enjoy last-minute plans, you're in the right place.");
+        System.out.println("Explore our options and discover your perfect destination for a 5-day getaway!");
     }
 
     private static void displayMenu() {
@@ -193,5 +207,58 @@ public class TravelRecommendationCLI {
             case 3 -> EXPENSIVE_ACCOMMODATION_PRICE_LIMIT;
             default -> ECONOMIC_ACCOMMODATION_PRICE_LIMIT;
         };
+    }
+
+    private static void showBestOption(Map<Map.Entry<AccommodationData, WeatherData>, Double> bestOptionMap) {
+        Map.Entry<AccommodationData, WeatherData> bestOption = bestOptionMap.keySet().iterator().next();
+        double bestOptionScore = bestOptionMap.get(bestOption);
+        System.out.println("\nBest Travel Destination with a score of " + bestOptionScore +"/1:");
+        showTravelDestination(bestOption);
+        System.out.println("Enjoy your stay and thank you for choosing us!");
+
+    }
+
+    private static void showTravelDestination(Map.Entry<AccommodationData, WeatherData> bestOption) {
+        AccommodationData accommodation = bestOption.getKey();
+        WeatherData weather = bestOption.getValue();
+        showAccommodationInfo(accommodation);
+        showWeatherInfo(weather);
+    }
+
+    private static void showRecommendations(Map<Map.Entry<AccommodationData, WeatherData>, Double> bestOptionMap) {
+        System.out.println("\nWe have chosen the three best rooms for you:");
+
+        int count = 1;
+        for (Map.Entry<AccommodationData, WeatherData> bestOption : bestOptionMap.keySet()) {
+            double bestOptionScore = bestOptionMap.get(bestOption);
+
+            System.out.println("\nTravel Destination " + count + " with a score of " + bestOptionScore + "/1:");
+            showTravelDestination(bestOption);
+
+            count++;
+        }
+    }
+
+
+    private static void showAccommodationInfo(AccommodationData accommodation) {
+        System.out.println("Name: " + accommodation.name());
+        System.out.println("The accommodation is located in " + accommodation.city() +
+                ", in " + accommodation.locationName());
+        System.out.println("Here you have the coordinates: " + accommodation.lat() + ", " + accommodation.lng());
+        System.out.println(accommodation.reviewsCount() +
+                " people have given their opinion about this accommodation, obtaining a rating of " +
+                accommodation.rating());
+        System.out.println("The price for the entire stay is " + accommodation.totalPrice() + "€");
+        System.out.println("You can find more information about the accommodation here: " + accommodation.url());
+    }
+
+    private static void showWeatherInfo(WeatherData weather) {
+        System.out.println("\nWe have averaged the weather forecasts for the next few days for you to enjoy at your leisure.");
+        System.out.println("Here we leave some data that may be useful for you:");
+        System.out.println("The average temperature will be " + weather.temp() + "ºC");
+        System.out.println("On average, there will be a " + weather.pop() + "% chance of precipitation and " +
+                weather.humidity() + "% humidity");
+        System.out.println("You will find a " + weather.clouds() + "% of cloudiness and an average wind speed of "
+                + weather.windSpeed() + "m/s");
     }
 }

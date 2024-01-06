@@ -50,21 +50,35 @@ public class TravelRecommendationLogic {
         this.accommodationPriceLimits = accommodationPriceLimits;
     }
 
-    public void showTheBestOption() throws ExpressTravelBusinessUnitException {
+    public Map<Map.Entry<AccommodationData, WeatherData>, Double> getTheBestOption() throws ExpressTravelBusinessUnitException {
+        LinkedHashMap<Map.Entry<AccommodationData, WeatherData>, Double> sortedTravelDestinations =
+                getSortedTravelDestinations();
+        assert sortedTravelDestinations != null;
+        if (sortedTravelDestinations.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        Map<Map.Entry<AccommodationData, WeatherData>, Double> bestOptionMap = new HashMap<>();
+        Map.Entry<AccommodationData, WeatherData> bestOption = sortedTravelDestinations.keySet().iterator().next();
+        double bestOptionScore = sortedTravelDestinations.get(bestOption);
+        bestOptionMap.put(bestOption, bestOptionScore);
+
+        return bestOptionMap;
+    }
+
+    private static Set<String> getAllLocationsSets() throws ExpressTravelBusinessUnitException {
         Set<String> weatherLocations = datamart.getAllLocations("weatherPredictions");
         Set<String> accommodationLocations = datamart.getAllLocations("accommodations");
         Set<String> allLocations = new HashSet<>(weatherLocations);
         allLocations.addAll(accommodationLocations);
-
-        List<WeatherData> weatherDataWithScores = setWeatherScores(allLocations);
-        List<AccommodationData> accommodationDataWithScores = setAccommodationScores(allLocations);
-        LinkedHashMap<Map.Entry<AccommodationData, WeatherData>, Double> sortedTravelDestinations = getSortedTravelDestinations(accommodationDataWithScores, weatherDataWithScores);
-        assert sortedTravelDestinations != null;
-        getTheBestOption(sortedTravelDestinations);
+        return allLocations;
     }
 
 
-    private static LinkedHashMap<Map.Entry<AccommodationData, WeatherData>, Double> getSortedTravelDestinations(List<AccommodationData> accommodationDataWithScores, List<WeatherData> weatherDataWithScores) {
+    private static LinkedHashMap<Map.Entry<AccommodationData, WeatherData>, Double> getSortedTravelDestinations() throws ExpressTravelBusinessUnitException {
+        Set<String> allLocations = getAllLocationsSets();
+
+        List<WeatherData> weatherDataWithScores = setWeatherScores(allLocations);
+        List<AccommodationData> accommodationDataWithScores = setAccommodationScores(allLocations);
         if (accommodationDataWithScores != null) {
             Map<Map.Entry<AccommodationData, WeatherData>, Double> travelDestinations =
                     getCombinedScores(weatherDataWithScores, accommodationDataWithScores);
@@ -314,43 +328,29 @@ public class TravelRecommendationLogic {
         return new WeatherData(locationName, averageTemp, averagePop, averageHumidity, averageClouds, averageWindSpeed);
     }
 
-
-    private static void getTheBestOption(
-            Map<Map.Entry<AccommodationData, WeatherData>, Double> sortedTravelDestinations
-    ) {
-        Map.Entry<AccommodationData, WeatherData> bestOption =
-                sortedTravelDestinations.keySet().iterator().next();
-        double bestOptionScore = sortedTravelDestinations.get(bestOption);
-        System.out.println("Best Travel Destination:");
-        System.out.println(bestOption + " - Score: " + bestOptionScore);
-    }
-
-    public void showRecommendations() throws ExpressTravelBusinessUnitException {
-        Set<String> weatherLocations = datamart.getAllLocations("weatherPredictions");
-        Set<String> accommodationLocations = datamart.getAllLocations("accommodations");
-        Set<String> allLocations = new HashSet<>(weatherLocations);
-        allLocations.addAll(accommodationLocations);
-
-        List<WeatherData> weatherDataWithScores = setWeatherScores(allLocations);
-        List<AccommodationData> accommodationDataWithScores = setAccommodationScores(allLocations);
-        LinkedHashMap<Map.Entry<AccommodationData, WeatherData>, Double> sortedTravelDestinations = getSortedTravelDestinations(accommodationDataWithScores, weatherDataWithScores);
+    public Map<Map.Entry<AccommodationData, WeatherData>, Double> getRecommendations() throws ExpressTravelBusinessUnitException {
+        LinkedHashMap<Map.Entry<AccommodationData, WeatherData>, Double> sortedTravelDestinations =
+                getSortedTravelDestinations();
         assert sortedTravelDestinations != null;
-        getRecommendations(sortedTravelDestinations);
+        return createRecommendations(sortedTravelDestinations);
     }
-    private static void getRecommendations(
+    private static Map<Map.Entry<AccommodationData, WeatherData>, Double> createRecommendations(
             Map<Map.Entry<AccommodationData, WeatherData>, Double> sortedTravelDestinations
     ) {
+        Map<Map.Entry<AccommodationData, WeatherData>, Double> recommendationsMap = new LinkedHashMap<>();
         int count = 0;
+
         for (Map.Entry<AccommodationData, WeatherData> entry : sortedTravelDestinations.keySet()) {
             if (count < 3) {
                 double score = sortedTravelDestinations.get(entry);
-                System.out.println("Travel Destination " + (count + 1) + ":");
-                System.out.println(entry + " - Score: " + score);
+                recommendationsMap.put(entry, score);
                 count++;
             } else {
                 break;
             }
         }
+
+        return recommendationsMap;
     }
 
     public void setPreferences(
