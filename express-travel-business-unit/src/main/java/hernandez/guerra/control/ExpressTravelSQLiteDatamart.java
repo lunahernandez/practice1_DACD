@@ -87,6 +87,7 @@ public record ExpressTravelSQLiteDatamart(String dbPath) implements ExpressTrave
         }
     }
 
+
     private void clearDatamart(Connection connection) throws SQLException {
         try (Statement statement = connection.createStatement()) {
             statement.executeUpdate("DELETE FROM weatherPredictions;");

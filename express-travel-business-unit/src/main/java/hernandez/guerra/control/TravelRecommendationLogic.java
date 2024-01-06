@@ -8,78 +8,49 @@ import java.util.*;
 
 import static java.lang.Math.abs;
 
-public class CommandLineInterface {
-    private static ExpressTravelDatamart datamart;
 
+public class TravelRecommendationLogic {
+    private static ExpressTravelDatamart datamart = null;
     private static boolean temperaturePreference;
     private static int[] humidityLimits;
-
     private static boolean sunRainPreference;
     private static double[] windSpeedLimits;
+    private static double[] accommodationPriceLimits;
+
     private static final double TEMPERATURE_LIMIT = 18.0;
 
-    private static final int[] LOW_HUMIDITY_LIMIT = new int[]{0, 39};
-    private static final int[] MODERATE_HUMIDITY_LIMIT = new int[]{40, 59};
-    private static final int[] HIGH_HUMIDITY_LIMIT = new int[]{60, 100};
-
-    private static final double[] LOW_WIND_SPEED_LIMIT = new double[]{0.0, 3.0};
-    private static final double[] MODERATE_WIND_SPEED_LIMIT = new double[]{3.0, 10.0};
-    private static final double[] HIGH_WIND_SPEED_LIMIT = new double[]{10.0, 100.0};
     private static final double TEMPERATURE_WEIGHT = 0.3;
     private static final double SUNNY_WEIGHT = 0.3;
     private static final double HUMIDITY_WEIGHT = 0.2;
     private static final double WIND_SPEED_WEIGHT = 0.2;
-
-    private static double[] accommodationPriceLimits;
-    private static final double[] ECONOMIC_ACCOMMODATION_PRICE_LIMIT = new double[]{0.0, 550.0};
-    private static final double[] STANDARD_ACCOMMODATION_PRICE_LIMIT = new double[]{550.0, 750.0};
-    private static final double[] EXPENSIVE_ACCOMMODATION_PRICE_LIMIT = new double[]{750.0, 10000.0};
     private static final double PRICE_WEIGHT = 0.5;
     private static final double RATING_WEIGHT = 0.5;
-
-
-    public CommandLineInterface(ExpressTravelDatamart datamart) {
-        CommandLineInterface.datamart = datamart;
-        temperaturePreference = false;
-        sunRainPreference = true;
-        humidityLimits = LOW_HUMIDITY_LIMIT;
-        windSpeedLimits = LOW_WIND_SPEED_LIMIT;
-        accommodationPriceLimits = ECONOMIC_ACCOMMODATION_PRICE_LIMIT;
+    public TravelRecommendationLogic(ExpressTravelDatamart datamart) {
+        this.datamart = datamart;
     }
 
-    public static void run() throws ExpressTravelBusinessUnitException {
-        Scanner scanner = new Scanner(System.in);
 
-        while (true) {
-            System.out.println("1. Surprise me!");
-            System.out.println("2. Set my preferences");
-            System.out.println("3. Recommendations");
-            System.out.println("4. Exit");
-
-            int choice = scanner.nextInt();
-
-            switch (choice) {
-                case 1:
-                    showTheBestOption();
-                    break;
-                case 2:
-                    setPreferences(scanner);
-                    showTheBestOption();
-                    break;
-                case 3:
-                    showRecommendations();
-                    break;
-                case 4:
-                    System.out.println("Leaving...");
-                    System.exit(0);
-                    break;
-                default:
-                    System.out.println("Invalid option");
-            }
-        }
+    public void setTemperaturePreference(boolean temperaturePreference) {
+        this.temperaturePreference = temperaturePreference;
     }
 
-    private static void showTheBestOption() throws ExpressTravelBusinessUnitException {
+    public void setHumidityLimits(int[] humidityLimits) {
+        this.humidityLimits = humidityLimits;
+    }
+
+    public void setSunRainPreference(boolean sunRainPreference) {
+        this.sunRainPreference = sunRainPreference;
+    }
+
+    public void setWindSpeedLimits(double[] windSpeedLimits) {
+        this.windSpeedLimits = windSpeedLimits;
+    }
+
+    public void setAccommodationPriceLimits(double[] accommodationPriceLimits) {
+        this.accommodationPriceLimits = accommodationPriceLimits;
+    }
+
+    public void showTheBestOption() throws ExpressTravelBusinessUnitException {
         Set<String> weatherLocations = datamart.getAllLocations("weatherPredictions");
         Set<String> accommodationLocations = datamart.getAllLocations("accommodations");
         Set<String> allLocations = new HashSet<>(weatherLocations);
@@ -87,43 +58,12 @@ public class CommandLineInterface {
 
         List<WeatherData> weatherDataWithScores = setWeatherScores(allLocations);
         List<AccommodationData> accommodationDataWithScores = setAccommodationScores(allLocations);
-        Map<Map.Entry<AccommodationData, WeatherData>, Double> sortedTravelDestinations =
-                getSortedTravelDestinations(accommodationDataWithScores, weatherDataWithScores);
+        LinkedHashMap<Map.Entry<AccommodationData, WeatherData>, Double> sortedTravelDestinations = getSortedTravelDestinations(accommodationDataWithScores, weatherDataWithScores);
         assert sortedTravelDestinations != null;
-        Map.Entry<AccommodationData, WeatherData> bestOption =
-                sortedTravelDestinations.keySet().iterator().next();
-        double bestOptionScore = sortedTravelDestinations.get(bestOption);
-        System.out.println("Best Travel Destination:");
-        System.out.println(bestOption + " - Score: " + bestOptionScore);
-
+        getTheBestOption(sortedTravelDestinations);
     }
 
-    private static void showRecommendations() throws ExpressTravelBusinessUnitException {
-        Set<String> weatherLocations = datamart.getAllLocations("weatherPredictions");
-        Set<String> accommodationLocations = datamart.getAllLocations("accommodations");
-        Set<String> allLocations = new HashSet<>(weatherLocations);
-        allLocations.addAll(accommodationLocations);
 
-        List<WeatherData> weatherDataWithScores = setWeatherScores(allLocations);
-        List<AccommodationData> accommodationDataWithScores = setAccommodationScores(allLocations);
-
-        if (accommodationDataWithScores != null) {
-            Map<Map.Entry<AccommodationData, WeatherData>, Double> sortedTravelDestinations =
-                    getSortedTravelDestinations(accommodationDataWithScores, weatherDataWithScores);
-
-            int count = 0;
-            for (Map.Entry<AccommodationData, WeatherData> entry : sortedTravelDestinations.keySet()) {
-                if (count < 3) {
-                    double score = sortedTravelDestinations.get(entry);
-                    System.out.println("Travel Destination " + (count + 1) + ":");
-                    System.out.println(entry + " - Score: " + score);
-                    count++;
-                } else {
-                    break;
-                }
-            }
-        }
-    }
     private static LinkedHashMap<Map.Entry<AccommodationData, WeatherData>, Double> getSortedTravelDestinations(List<AccommodationData> accommodationDataWithScores, List<WeatherData> weatherDataWithScores) {
         if (accommodationDataWithScores != null) {
             Map<Map.Entry<AccommodationData, WeatherData>, Double> travelDestinations =
@@ -339,97 +279,6 @@ public class CommandLineInterface {
     }
 
 
-    private static void setPreferences(Scanner scanner) {
-        setClimatePreferences(scanner);
-        setAccommodationPreferences(scanner);
-    }
-
-    private static void setClimatePreferences(Scanner scanner) {
-        System.out.println("Set your climate preferences:");
-
-        System.out.println("Team Cold(1) vs. Team Warm(2)");
-        temperaturePreference = setTemperaturePreference(scanner);
-
-        System.out.println("Team Sun(1) vs. Team Rain(2)");
-        sunRainPreference = setSunRainPreference(scanner);
-
-        System.out.println("Humidity Preference:");
-        humidityLimits = setHumidityPreference(scanner);
-
-        System.out.println("Wind Speed Preference (m/s):");
-        windSpeedLimits = setWindSpeedPreference(scanner);
-
-        System.out.println("Climate preferences set successfully!");
-    }
-
-
-    private static boolean setTemperaturePreference(Scanner scanner) {
-        int temperatureChoice = scanner.nextInt();
-        return temperatureChoice == 1;
-    }
-
-    private static boolean setSunRainPreference(Scanner scanner) {
-        int sunRainChoice = scanner.nextInt();
-        return sunRainChoice == 1;
-    }
-
-    private static int[] setHumidityPreference(Scanner scanner) {
-        System.out.println("1. Low");
-        System.out.println("2. Moderate");
-        System.out.println("3. High");
-        System.out.println("4. Not Sure");
-
-        int humidityChoice = scanner.nextInt();
-
-        return switch (humidityChoice) {
-            case 2 -> MODERATE_HUMIDITY_LIMIT;
-            case 3 -> HIGH_HUMIDITY_LIMIT;
-            default -> LOW_HUMIDITY_LIMIT;
-        };
-    }
-
-
-    private static double[] setWindSpeedPreference(Scanner scanner) {
-        System.out.println("1. Low");
-        System.out.println("2. Moderate");
-        System.out.println("3. High");
-        System.out.println("4. Not Sure");
-
-        int windSpeedChoice = scanner.nextInt();
-
-        return switch (windSpeedChoice) {
-            case 2 -> MODERATE_WIND_SPEED_LIMIT;
-            case 3 -> HIGH_WIND_SPEED_LIMIT;
-            default -> LOW_WIND_SPEED_LIMIT;
-        };
-    }
-
-    private static void setAccommodationPreferences(Scanner scanner) {
-        System.out.println("Set your accommodation preferences:");
-
-        System.out.println("Price preferences:");
-        accommodationPriceLimits = setAccommodationPricePreference(scanner);
-
-        System.out.println("Accommodation preferences set successfully!");
-    }
-
-
-    private static double[] setAccommodationPricePreference(Scanner scanner) {
-        System.out.println("1. Economic");
-        System.out.println("2. Standard");
-        System.out.println("3. Expensive");
-        System.out.println("4. No preferences");
-
-
-        int accommodationPriceChoice = scanner.nextInt();
-
-        return switch (accommodationPriceChoice) {
-            case 2 -> STANDARD_ACCOMMODATION_PRICE_LIMIT;
-            case 3 -> EXPENSIVE_ACCOMMODATION_PRICE_LIMIT;
-            default -> ECONOMIC_ACCOMMODATION_PRICE_LIMIT;
-        };
-    }
-
     private static WeatherData getAverageWeatherData(List<WeatherData> weatherDataList) {
         if (weatherDataList.isEmpty()) {
             System.out.println("No weather data available.");
@@ -463,5 +312,60 @@ public class CommandLineInterface {
                 .orElse(0.0);
 
         return new WeatherData(locationName, averageTemp, averagePop, averageHumidity, averageClouds, averageWindSpeed);
+    }
+
+
+    private static void getTheBestOption(
+            Map<Map.Entry<AccommodationData, WeatherData>, Double> sortedTravelDestinations
+    ) {
+        Map.Entry<AccommodationData, WeatherData> bestOption =
+                sortedTravelDestinations.keySet().iterator().next();
+        double bestOptionScore = sortedTravelDestinations.get(bestOption);
+        System.out.println("Best Travel Destination:");
+        System.out.println(bestOption + " - Score: " + bestOptionScore);
+    }
+
+    public void showRecommendations() throws ExpressTravelBusinessUnitException {
+        Set<String> weatherLocations = datamart.getAllLocations("weatherPredictions");
+        Set<String> accommodationLocations = datamart.getAllLocations("accommodations");
+        Set<String> allLocations = new HashSet<>(weatherLocations);
+        allLocations.addAll(accommodationLocations);
+
+        List<WeatherData> weatherDataWithScores = setWeatherScores(allLocations);
+        List<AccommodationData> accommodationDataWithScores = setAccommodationScores(allLocations);
+        LinkedHashMap<Map.Entry<AccommodationData, WeatherData>, Double> sortedTravelDestinations = getSortedTravelDestinations(accommodationDataWithScores, weatherDataWithScores);
+        assert sortedTravelDestinations != null;
+        getRecommendations(sortedTravelDestinations);
+    }
+    private static void getRecommendations(
+            Map<Map.Entry<AccommodationData, WeatherData>, Double> sortedTravelDestinations
+    ) {
+        int count = 0;
+        for (Map.Entry<AccommodationData, WeatherData> entry : sortedTravelDestinations.keySet()) {
+            if (count < 3) {
+                double score = sortedTravelDestinations.get(entry);
+                System.out.println("Travel Destination " + (count + 1) + ":");
+                System.out.println(entry + " - Score: " + score);
+                count++;
+            } else {
+                break;
+            }
+        }
+    }
+
+    public void setPreferences(
+            boolean temperaturePreference,
+            boolean sunRainPreference,
+            int[] humidityLimits,
+            double[] windSpeedLimits,
+            double[] accommodationPriceLimits
+    ) {
+        setTemperaturePreference(temperaturePreference);
+        setSunRainPreference(sunRainPreference);
+        setHumidityLimits(humidityLimits);
+        setWindSpeedLimits(windSpeedLimits);
+        setAccommodationPriceLimits(accommodationPriceLimits);
+
+        System.out.println("Preferences set successfully!");
     }
 }

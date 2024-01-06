@@ -1,6 +1,7 @@
 package hernandez.guerra.control;
 
 import hernandez.guerra.exceptions.ExpressTravelBusinessUnitException;
+import hernandez.guerra.view.TravelRecommendationCLI;
 import org.apache.activemq.ActiveMQConnection;
 
 public class Main {
@@ -16,13 +17,11 @@ public class Main {
         ExpressTravelDatamart datamart = new ExpressTravelSQLiteDatamart(dbPath);
         EventSubscriber eventSubscriber = new JMSEventSubscriber(brokerUrl, weatherTopicName, accommodationTopicName,
                 "expressTravelBusinessUnit", datamart);
-
         datamart.initialize(weatherTopicName, accommodationTopicName, dataMartInitializer);
         eventSubscriber.subscribe();
 
-
-        CommandLineInterface commandLineInterface = new CommandLineInterface(datamart);
-        commandLineInterface.run();
-
+        TravelRecommendationLogic logic = new TravelRecommendationLogic(datamart);
+        TravelRecommendationCLI cli = new TravelRecommendationCLI(logic);
+        cli.run();
     }
 }
