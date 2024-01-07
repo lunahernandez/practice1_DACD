@@ -7,7 +7,6 @@ import org.apache.activemq.ActiveMQConnection;
 public class Main {
     public static void main(String[] args) throws ExpressTravelBusinessUnitException {
         String dbPath = args[0];
-        System.out.println(dbPath);
         String brokerUrl = ActiveMQConnection.DEFAULT_BROKER_URL;
         String weatherTopicName = "prediction.Weather";
         String accommodationTopicName = "prediction.Accommodation";
