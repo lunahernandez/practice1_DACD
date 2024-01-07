@@ -4,19 +4,13 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="93ef2252-38ca-4292-a857-99b5fbee14ab" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/encodings.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/encodings.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/uiDesigner.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+    <list default="true" id="93ef2252-38ca-4292-a857-99b5fbee14ab" name="Changes" comment="README.md">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/accommodation-provider/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/accommodation-provider/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/datalake-builder/src/main/java/hernandez/guerra/control/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/datalake-builder/src/main/java/hernandez/guerra/control/Main.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/express-travel-advisor/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/express-travel-advisor/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/express-travel-advisor/src/main/java/hernandez/guerra/control/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/express-travel-advisor/src/main/java/hernandez/guerra/control/Main.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/predictionProviderUMLDiagram.png" beforeDir="false" afterPath="$PROJECT_DIR$/predictionProviderUMLDiagram.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/accommodation-provider/src/main/java/hernandez/guerra/control/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/accommodation-provider/src/main/java/hernandez/guerra/control/Main.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/express-travel-advisor/src/main/java/hernandez/guerra/view/TravelRecommendationCLI.java" beforeDir="false" afterPath="$PROJECT_DIR$/express-travel-advisor/src/main/java/hernandez/guerra/view/TravelRecommendationCLI.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/locations.tsv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/prediction-provider/src/main/java/hernandez/guerra/control/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/prediction-provider/src/main/java/hernandez/guerra/control/Main.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -29,10 +23,10 @@
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "customColor": "",
-  "associatedIndex": 8
-}]]></component>
+  <component name="ProjectColorInfo">{
+  &quot;customColor&quot;: &quot;&quot;,
+  &quot;associatedIndex&quot;: 8
+}</component>
   <component name="ProjectId" id="2adTQd7FIJQjNss87jredLR0iCS" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
@@ -43,13 +37,17 @@
     "Application.Main (1).executor": "Run",
     "Application.Main (2).executor": "Run",
     "Application.Main.executor": "Run",
+    "Maven.accommodation-provider [package].executor": "Run",
+    "Maven.datalake-builder [package].executor": "Run",
+    "Maven.express-travel-advisor [package].executor": "Run",
+    "Maven.prediction-provider [package].executor": "Run",
     "RunOnceActivity.OpenProjectViewOnStart": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "feature/final-project",
+    "git-widget-placeholder": "master",
     "kotlin-language-version-configured": "true"
   }
 }]]></component>
-  <component name="RunManager" selected="Application.Main (3)">
+  <component name="RunManager" selected="Application.Main (2)">
     <configuration name="Main (1)" type="Application" factoryName="Application" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="hernandez.guerra.control.Main" />
       <module name="datalake-builder" />
@@ -67,7 +65,7 @@
     <configuration name="Main (2)" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="hernandez.guerra.control.Main" />
       <module name="prediction-provider" />
-      <option name="PROGRAM_PARAMETERS" value="5643c5db7dd5dc94e937f1b24e012368" />
+      <option name="PROGRAM_PARAMETERS" value="5643c5db7dd5dc94e937f1b24e012368 C:\Users\Equipo\Luna\UNIVERSIDAD\2º\DACD\locations.tsv" />
       <extension name="coverage">
         <pattern>
           <option name="PATTERN" value="hernandez.guerra.control.*" />
@@ -81,7 +79,7 @@
     <configuration name="Main (3)" type="Application" factoryName="Application" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="hernandez.guerra.control.Main" />
       <module name="accommodation-provider" />
-      <option name="PROGRAM_PARAMETERS" value="13fe6b88d8msh6d32bc3608ece2fp15daf5jsn1aa95bb9fd0b" />
+      <option name="PROGRAM_PARAMETERS" value="13fe6b88d8msh6d32bc3608ece2fp15daf5jsn1aa95bb9fd0b C:\Users\Equipo\Luna\UNIVERSIDAD\2º\DACD\locations.tsv" />
       <extension name="coverage">
         <pattern>
           <option name="PATTERN" value="hernandez.guerra.control.*" />
@@ -130,5 +128,30 @@
       <updated>1704647441510</updated>
     </task>
     <servers />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="README.md" />
+    <option name="LAST_COMMIT_MESSAGE" value="README.md" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <breakpoint enabled="true" type="java-exception">
+          <properties class="java.time.format.DateTimeParseException" package="java.time.format" />
+          <option name="timeStamp" value="1" />
+        </breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
   </component>
 </project>

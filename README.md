@@ -62,11 +62,11 @@ This project can be run in IntelliJ IDEA by following these steps:
    For example, for `accommodation-provider`, it might look like this:
 
       ```bash
-      your_airbnb_api_key
+      your_airbnb_api_key path/to/the/file/locations.tsv
    ```
    And for `prediction-provider`:
       ```bash
-      your_openweathermap_api_key
+      your_openweathermap_api_key path/to/the/file/locations.tsv
    ```
    For `datalake-builder`, you can add the root directory from which to create the datalake directory and its
 subdirectories:
@@ -97,9 +97,9 @@ the four modules.
 
 #### Steps to Execute
 
-1. **Download and extract the ZIP files:**
+1. **Download and extract the ZIP files and the `locations.tsv` file:**
    Download the zip files for the Accommodation Provider, Prediction Provider, Datalake Builder, and Express Travel Advisor
-modules. Unzip them in your preferred directory.
+modules. Unzip them in your preferred directory. Download the **"locations.tsv"** file located in the repository.
 
 2. **Configure Apache ActiveMQ:**
    Follow the instructions [here](https://activemq.apache.org/getting-started) to start the broker.
@@ -109,22 +109,23 @@ modules. Unzip them in your preferred directory.
 4. **Run the project:**
    - Open a terminal or command prompt.
    - Navigate to the directories where you extracted each module.
-   - **Run Datalake Builder`:**
+   - **Run Datalake Builder:**
      ```
      java -jar datalake-builder-1.0-SNAPSHOT-jar-with-dependencies.jar /path/to/your/root/directory
+     ```
+   - **Run Accommodation Provider:**
+     ```
+     java -jar accommodation-provider-1.0-SNAPSHOT-jar-with-dependencies.jar your_airbnb_api_key path/to/the/file/locations.tsv
+     ```
+   - **Run Prediction Provider:**
+     ```
+     java -jar prediction-provider-1.0-SNAPSHOT-jar-with-dependencies.jar your_openweathermap_api_key path/to/the/file/locations.tsv
      ```
    - **Run Express Travel Advisor:**
      ```
      java -jar express-travel-advisor-1.0-SNAPSHOT-jar-with-dependencies.jar /path/to/your/database/datamart.db
      ```
-   - **Run Accommodation Provider:**
-     ```
-     java -jar accommodation-provider-1.0-SNAPSHOT-jar-with-dependencies.jar your_airbnb_api_key
-     ```
-   - **Run Prediction Provider:**
-     ```
-     java -jar prediction-provider-1.0-SNAPSHOT-jar-with-dependencies.jar your_openweathermap_api_key
-     ```
+
 Note: Open separate terminals for each module, as control does not return to the user until execution stops.
 ## Design
 ### Design Patterns and Principles Used

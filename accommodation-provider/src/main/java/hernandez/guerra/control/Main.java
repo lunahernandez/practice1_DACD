@@ -14,9 +14,10 @@ import java.util.Scanner;
 public class Main {
     public static void main(String[] args) throws AccommodationProviderException {
         String apiKey = args[0];
+        String locationsTsvPath = args[1];
         String brokerUrl = ActiveMQConnection.DEFAULT_BROKER_URL;
 
-        List<Location> locationList = readLocations();
+        List<Location> locationList = readLocations(locationsTsvPath);
         AccommodationProvider accommodationProvider = new AirbnbProvider(apiKey);
         AccommodationStore accommodationStore =
                 new JMSAccommodationStore("prediction.Accommodation", brokerUrl);
@@ -25,10 +26,10 @@ public class Main {
         accommodationController.execute();
     }
 
-    private static List<Location> readLocations() throws AccommodationProviderException {
+    private static List<Location> readLocations(String locationsTsvPath) throws AccommodationProviderException {
         List<Location> locationList = new ArrayList<>();
 
-        try (Scanner scanner = new Scanner(new File("locations.tsv"))) {
+        try (Scanner scanner = new Scanner(new File(locationsTsvPath))) {
             if (scanner.hasNextLine()) scanner.nextLine();
             addLocationsToList(scanner, locationList);
 

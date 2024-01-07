@@ -15,8 +15,9 @@ public class Main {
 
     public static void main(String[] args) throws PredictionProviderException {
         String apikey = args[0];
+        String locationsTsvPath = args[1];
         String brokerUrl = ActiveMQConnection.DEFAULT_BROKER_URL;
-        List<Location> locationList = readLocations();
+        List<Location> locationList = readLocations(locationsTsvPath);
 
         WeatherProvider weatherProvider = new OpenWeatherMapProvider(apikey);
         WeatherStore weatherStore = new JMSWeatherStore("prediction.Weather", brokerUrl);
@@ -25,10 +26,10 @@ public class Main {
         weatherController.execute();
     }
 
-    private static List<Location> readLocations() throws PredictionProviderException {
+    private static List<Location> readLocations(String locationsTsvPath) throws PredictionProviderException {
         List<Location> locationList = new ArrayList<>();
 
-        try (Scanner scanner = new Scanner(new File("locations.tsv"))) {
+        try (Scanner scanner = new Scanner(new File(locationsTsvPath))) {
             if (scanner.hasNextLine()) scanner.nextLine();
             addLocationsToList(scanner, locationList);
 

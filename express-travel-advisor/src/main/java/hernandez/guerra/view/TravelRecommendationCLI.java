@@ -8,6 +8,7 @@ import hernandez.guerra.model.WeatherData;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.InputMismatchException;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Scanner;
 
@@ -54,14 +55,23 @@ public class TravelRecommendationCLI {
                     setPreferences();
                     Map<Map.Entry<AccommodationData, WeatherData>, Double> bestDefaultOption =
                             recommendationLogic.getTheBestOption();
-                    showBestOption(bestDefaultOption);
+                    if (bestDefaultOption != null) {
+                        showBestOption(bestDefaultOption);
+                    } else {
+                        System.out.println("No available accommodation found.");
+                    }
+
                     break;
                 case 2:
                     setUserValues(scanner);
                     setPreferences();
                     Map<Map.Entry<AccommodationData, WeatherData>, Double> bestUserOption =
                             recommendationLogic.getTheBestOption();
-                    showBestOption(bestUserOption);
+                    if (bestUserOption != null) {
+                        showBestOption(bestUserOption);
+                    } else {
+                        System.out.println("No available accommodation found.");
+                    }
                     break;
                 case 3:
                     setDefaultValues();
@@ -214,12 +224,16 @@ public class TravelRecommendationCLI {
     }
 
     private void showBestOption(Map<Map.Entry<AccommodationData, WeatherData>, Double> bestOptionMap) {
-        Map.Entry<AccommodationData, WeatherData> bestOption = bestOptionMap.keySet().iterator().next();
-        double bestOptionScore = bestOptionMap.get(bestOption);
-        System.out.println("\nBest Travel Destination with a score of " + round(bestOptionScore, 4) +"/1:");
-        showTravelDestination(bestOption);
-        System.out.println("\nEnjoy your stay and thank you for choosing us!");
-
+        Iterator<Map.Entry<AccommodationData, WeatherData>> iterator = bestOptionMap.keySet().iterator();
+        if (iterator.hasNext()) {
+            Map.Entry<AccommodationData, WeatherData> bestOption = iterator.next();
+            double bestOptionScore = bestOptionMap.get(bestOption);
+            System.out.println("\nBest Travel Destination with a score of " + round(bestOptionScore, 4) +"/1:");
+            showTravelDestination(bestOption);
+            System.out.println("\nEnjoy your stay and thank you for choosing us!");
+        } else {
+            System.out.println("No available accommodation found.");
+        }
     }
 
     private void showTravelDestination(Map.Entry<AccommodationData, WeatherData> bestOption) {
@@ -230,20 +244,25 @@ public class TravelRecommendationCLI {
     }
 
     private void showRecommendations(Map<Map.Entry<AccommodationData, WeatherData>, Double> bestOptionMap) {
-        System.out.println("\nWe have chosen the three best rooms for you:");
-
-        int count = 1;
-        for (Map.Entry<AccommodationData, WeatherData> bestOption : bestOptionMap.keySet()) {
-            double bestOptionScore = bestOptionMap.get(bestOption);
-
-            System.out.println("\nTravel Destination " + count +
-                    " with a score of " + round(bestOptionScore, 4) + "/1:");
-            showTravelDestination(bestOption);
-
-            count++;
+        if (bestOptionMap != null) {
+            System.out.println("\nWe have chosen the three best rooms for you:");
+            int count = 1;
+            for (Map.Entry<AccommodationData, WeatherData> bestOption : bestOptionMap.keySet()) {
+                double bestOptionScore = bestOptionMap.get(bestOption);
+                showTravelDestinations(bestOption, count, bestOptionScore);
+                count++;
+            }
+            System.out.println("\nChoose the one that best suits your preferences.");
+            System.out.println("Enjoy your stay and thank you for choosing us!");
+        } else {
+            System.out.println("No available accommodation found.");
         }
-        System.out.println("\nChoose the one that best suits your preferences.");
-        System.out.println("Enjoy your stay and thank you for choosing us!");
+    }
+
+    private void showTravelDestinations(Map.Entry<AccommodationData, WeatherData> bestOption, int count, double bestOptionScore) {
+        System.out.println("\nTravel Destination " + count +
+                " with a score of " + round(bestOptionScore, 4) + "/1:");
+        showTravelDestination(bestOption);
     }
 
 
