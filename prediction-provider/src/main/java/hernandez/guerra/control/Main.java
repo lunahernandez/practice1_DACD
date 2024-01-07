@@ -1,18 +1,22 @@
 package hernandez.guerra.control;
 
+import hernandez.guerra.exceptions.PredictionProviderException;
 import hernandez.guerra.model.Location;
 import org.apache.activemq.ActiveMQConnection;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
 
 
 public class Main {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws PredictionProviderException {
         String apikey = args[0];
         String brokerUrl = ActiveMQConnection.DEFAULT_BROKER_URL;
-        List<Location> locationList = loadLocations();
+        List<Location> locationList = readLocations();
 
         WeatherProvider weatherProvider = new OpenWeatherMapProvider(apikey);
         WeatherStore weatherStore = new JMSWeatherStore("prediction.Weather", brokerUrl);
@@ -21,16 +25,23 @@ public class Main {
         weatherController.execute();
     }
 
-    public static List<Location> loadLocations() {
+    private static List<Location> readLocations() throws PredictionProviderException {
         List<Location> locationList = new ArrayList<>();
-        locationList.add(new Location("28.01", "-15.53", "GC"));
-        locationList.add(new Location("28.40", "-13.86", "FTV"));
-        locationList.add(new Location("28.97", "-13.55", "LZ"));
-        locationList.add(new Location("29.28", "-13.50", "LGR"));
-        locationList.add(new Location("28.46", "-16.25", "TF"));
-        locationList.add(new Location("28.75", "-17.89", "LP"));
-        locationList.add(new Location("28.15", "-17.26", "GM"));
-        locationList.add(new Location("27.80", "-17.89", "EH"));
+
+        try (Scanner scanner = new Scanner(new File("locations.tsv"))) {
+            if (scanner.hasNextLine()) scanner.nextLine();
+            addLocationsToList(scanner, locationList);
+
+        } catch (FileNotFoundException e) {
+            throw new PredictionProviderException(e.getMessage(), e);
+        }
         return locationList;
+    }
+
+    private static void addLocationsToList(Scanner scanner, List<Location> locationList) {
+        while (scanner.hasNextLine()) {
+            String[] data = scanner.nextLine().split("\t");
+            locationList.add(new Location(data[0], data[1], data[2]));
+        }
     }
 }

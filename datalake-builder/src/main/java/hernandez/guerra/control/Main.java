@@ -11,8 +11,8 @@ public class Main {
         String eventStoreDirectory = "eventStore";
 
         EventStore eventStore = new FileEventStore(eventStoreDirectory);
-        EventSubscriber eventSubscriber = new JMSEventSubscriber(brokerUrl, weatherTopicName, accommodationTopicName, "eventStoreBuilder", eventStore);
-        System.out.println("Creados");
+        EventSubscriber eventSubscriber = new JMSEventSubscriber(brokerUrl, weatherTopicName, accommodationTopicName,
+                "eventStoreBuilder", eventStore);
         eventSubscriber.subscribe();
     }
 }
