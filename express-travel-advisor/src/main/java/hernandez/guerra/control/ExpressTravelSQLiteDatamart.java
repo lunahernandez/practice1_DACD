@@ -15,7 +15,7 @@ import java.io.IOException;
 import java.sql.*;
 import java.util.*;
 
-public record ExpressTravelSQLiteDatamart(String dbPath) implements ExpressTravelDatamart{
+public record ExpressTravelSQLiteDatamart(String dbPath) implements ExpressTravelDatamart {
     public ExpressTravelSQLiteDatamart {
         try {
             createTables();
@@ -69,21 +69,32 @@ public record ExpressTravelSQLiteDatamart(String dbPath) implements ExpressTrave
         try (Connection connection = connect()) {
             clearDatamart(connection);
 
-            File weatherFile = datamartInitializer.findLatestEventFile(weatherTopicName);
-            File accommodationFile = datamartInitializer.findLatestEventFile(accommodationTopicName);
-            System.out.println(weatherFile);
-            System.out.println(accommodationFile);
-
-            if (weatherFile != null) {
-                processEventFile(weatherFile, "weatherPredictions", connection);
-            }
-
-            if (accommodationFile != null) {
-                processEventFile(accommodationFile, "accommodations", connection);
-            }
+            initializeWeather(datamartInitializer, weatherTopicName, connection);
+            initializeAccommodation(datamartInitializer, accommodationTopicName, connection);
 
         } catch (SQLException e) {
             throw new ExpressTravelBusinessUnitException(e.getMessage(), e);
+        }
+    }
+
+    private void initializeWeather(
+            DatamartInitializer datamartInitializer, String weatherTopicName, Connection connection
+    ) throws ExpressTravelBusinessUnitException {
+        File weatherFile = datamartInitializer.findLatestEventFile(weatherTopicName);
+        processEventFileIfNotNull(weatherFile, "weatherPredictions", connection);
+    }
+
+    private void initializeAccommodation(
+            DatamartInitializer datamartInitializer, String accommodationTopicName, Connection connection
+    ) throws ExpressTravelBusinessUnitException {
+        File accommodationFile = datamartInitializer.findLatestEventFile(accommodationTopicName);
+        processEventFileIfNotNull(accommodationFile, "accommodations", connection);
+    }
+
+    private void processEventFileIfNotNull(File eventFile, String tableName, Connection connection)
+            throws ExpressTravelBusinessUnitException {
+        if (eventFile != null) {
+            processEventFile(eventFile, tableName, connection);
         }
     }
 
@@ -94,21 +105,11 @@ public record ExpressTravelSQLiteDatamart(String dbPath) implements ExpressTrave
             statement.executeUpdate("DELETE FROM accommodations;");
         }
     }
-    private void processEventFile(File eventFile, String tableName, Connection connection) throws ExpressTravelBusinessUnitException {
+
+    private void processEventFile(File eventFile, String tableName, Connection connection)
+            throws ExpressTravelBusinessUnitException {
         try (BufferedReader reader = new BufferedReader(new FileReader(eventFile))) {
-            String line;
-            List<String> recentEvents = new ArrayList<>();
-            String lastTimestamp = null;
-
-            while ((line = reader.readLine()) != null) {
-                String currentTimestamp = extractDateAndTime(line);
-
-                if (lastTimestamp == null || currentTimestamp.compareTo(lastTimestamp) > 0) {
-                    lastTimestamp = currentTimestamp;
-                    recentEvents.clear();
-                }
-                recentEvents.add(line);
-            }
+            List<String> recentEvents = readRecentEvents(reader);
 
             for (String eventData : recentEvents) {
                 insertEventIntoTable(eventData, tableName, connection);
@@ -119,13 +120,37 @@ public record ExpressTravelSQLiteDatamart(String dbPath) implements ExpressTrave
         }
     }
 
+    private List<String> readRecentEvents(BufferedReader reader) throws IOException {
+        List<String> recentEvents = new ArrayList<>();
+        String line;
+        String lastTimestamp = null;
+
+        while ((line = reader.readLine()) != null) {
+            String currentTimestamp = extractDateAndTime(line);
+            lastTimestamp = updateIfNeeded(lastTimestamp, currentTimestamp, recentEvents);
+            recentEvents.add(line);
+        }
+
+        return recentEvents;
+    }
+
+    private static String updateIfNeeded(String lastTimestamp, String currentTimestamp, List<String> recentEvents) {
+        if (lastTimestamp == null || currentTimestamp.compareTo(lastTimestamp) > 0) {
+            lastTimestamp = currentTimestamp;
+            recentEvents.clear();
+        }
+        return lastTimestamp;
+    }
+
+
     private String extractDateAndTime(String eventData) {
         JsonObject json = JsonParser.parseString(eventData).getAsJsonObject();
         String fullTimestamp = json.get("ts").getAsString();
         return fullTimestamp.substring(0, 13);
     }
 
-    private void insertEventIntoTable(String eventData, String tableName, Connection connection) throws ExpressTravelBusinessUnitException {
+    private void insertEventIntoTable(String eventData, String tableName, Connection connection)
+            throws ExpressTravelBusinessUnitException {
         switch (tableName) {
             case "weatherPredictions":
                 insertWeatherPrediction(eventData, connection);
@@ -139,19 +164,19 @@ public record ExpressTravelSQLiteDatamart(String dbPath) implements ExpressTrave
     }
 
 
-
     private void insertWeatherPrediction(String eventData, Connection connection) throws ExpressTravelBusinessUnitException {
-            JsonObject json = JsonParser.parseString(eventData).getAsJsonObject();
-            String insertSQL = "INSERT INTO weatherPredictions (predictionTime, locationName, temp, pop, humidity, clouds, windSpeed) " +
-                    "VALUES (?, ?, ?, ?, ?, ?, ?)";
+        JsonObject json = JsonParser.parseString(eventData).getAsJsonObject();
+        String insertSQL = "INSERT INTO weatherPredictions (predictionTime, locationName, temp, pop, humidity, clouds, windSpeed) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?)";
 
-            try (PreparedStatement preparedStatement = connection.prepareStatement(insertSQL)) {
-                setInsertWeatherParameters(preparedStatement, json);
-                preparedStatement.executeUpdate();
-            } catch (SQLException e) {
-                throw new ExpressTravelBusinessUnitException(e.getMessage(), e);
-            }
+        try (PreparedStatement preparedStatement = connection.prepareStatement(insertSQL)) {
+            setInsertWeatherParameters(preparedStatement, json);
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new ExpressTravelBusinessUnitException(e.getMessage(), e);
+        }
     }
+
     private static void setInsertWeatherParameters(PreparedStatement preparedStatement, JsonObject json) throws SQLException {
         preparedStatement.setString(1, json.get("predictionTime").getAsString());
         preparedStatement.setString(2, json.getAsJsonObject("location").get("name").getAsString());
@@ -163,16 +188,17 @@ public record ExpressTravelSQLiteDatamart(String dbPath) implements ExpressTrave
     }
 
     private void insertAccommodation(String eventData, Connection connection) throws ExpressTravelBusinessUnitException {
-            JsonObject json = JsonParser.parseString(eventData).getAsJsonObject();
-            String insertSQL = "INSERT INTO accommodations (locationName, url, name, city, lat, lng, reviewsCount, rating, totalPrice) " +
-                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        JsonObject json = JsonParser.parseString(eventData).getAsJsonObject();
+        String insertSQL =
+                "INSERT INTO accommodations (locationName, url, name, city, lat, lng, reviewsCount, rating, totalPrice) " +
+                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-            try (PreparedStatement preparedStatement = connection.prepareStatement(insertSQL)) {
-                setInsertAccommodationParameters(preparedStatement, json);
-                preparedStatement.executeUpdate();
-            } catch (SQLException e) {
-                throw new ExpressTravelBusinessUnitException(e.getMessage(), e);
-            }
+        try (PreparedStatement preparedStatement = connection.prepareStatement(insertSQL)) {
+            setInsertAccommodationParameters(preparedStatement, json);
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new ExpressTravelBusinessUnitException(e.getMessage(), e);
+        }
     }
 
     private static void setInsertAccommodationParameters(PreparedStatement preparedStatement, JsonObject json) throws SQLException {
@@ -202,21 +228,35 @@ public record ExpressTravelSQLiteDatamart(String dbPath) implements ExpressTrave
     @Override
     public void update(TextMessage textMessage, String topicName) throws ExpressTravelBusinessUnitException {
         try (Connection connection = connect()) {
-
-            if (Objects.equals(topicName, "prediction.Weather")) {
-                insertWeatherPrediction(textMessage.getText(), connection);
-                deleteOldData(connection, "prediction.Weather", extractDateAndTime(textMessage.getText()));
-            }
-
-            if (Objects.equals(topicName, "prediction.Accommodation")) {
-                insertAccommodation(textMessage.getText(), connection);
-                deleteOldData(connection, "prediction.Accommodation", extractDateAndTime(textMessage.getText()));
-            }
-
+            String tableName = getTableName(topicName);
+            insertEvent(textMessage.getText(), tableName, connection);
+            deleteOldData(connection, tableName, extractDateAndTime(textMessage.getText()));
         } catch (SQLException | JMSException e) {
             throw new ExpressTravelBusinessUnitException(e.getMessage(), e);
         }
     }
+
+    private String getTableName(String topicName) {
+        return switch (topicName) {
+            case "prediction.Weather" -> "weatherPredictions";
+            case "prediction.Accommodation" -> "accommodations";
+            default -> throw new IllegalArgumentException("Unrecognized topic: " + topicName);
+        };
+    }
+
+
+    private void insertEvent(String eventData, String tableName, Connection connection)
+            throws ExpressTravelBusinessUnitException {
+        switch (tableName) {
+            case "weatherPredictions":
+            case "accommodations":
+                insertEventIntoTable(eventData, tableName, connection);
+                break;
+            default:
+                System.out.println("Unknown table name: " + tableName);
+        }
+    }
+
 
     private void deleteOldData(Connection connection, String tableName, String eventTimestamp) throws SQLException {
         String deleteSQL = "DELETE FROM " + tableName + " WHERE SUBSTR(ts, 1, 13) < ?";
@@ -235,28 +275,45 @@ public record ExpressTravelSQLiteDatamart(String dbPath) implements ExpressTrave
             String sql = "SELECT * FROM weatherPredictions WHERE locationName = ?";
             try (PreparedStatement statement = connection.prepareStatement(sql)) {
                 statement.setString(1, location);
-
-                try (ResultSet resultSet = statement.executeQuery()) {
-                    while (resultSet.next()) {
-                        String locationName = resultSet.getString("locationName");
-                        double temp = resultSet.getDouble("temp");
-                        double pop = resultSet.getDouble("pop");
-                        int humidity = resultSet.getInt("humidity");
-                        int clouds = resultSet.getInt("clouds");
-                        double windSpeed = resultSet.getDouble("windSpeed");
-
-                        WeatherData weatherData = new WeatherData(locationName, temp, pop, humidity, clouds, windSpeed);
-                        result.add(weatherData);
-                    }
-                }
+                executeQuery(statement, result);
             }
-        } catch (SQLException e) {
-            throw new ExpressTravelBusinessUnitException(e.getMessage(), e);
-        } catch (ExpressTravelBusinessUnitException e) {
-            throw new RuntimeException(e);
+        } catch (SQLException | ExpressTravelBusinessUnitException e) {
+            handleException(e);
         }
 
         return result;
+    }
+
+    private void executeQuery(PreparedStatement statement, List<WeatherData> result) throws SQLException {
+        try (ResultSet resultSet = statement.executeQuery()) {
+            getWeatherData(result, resultSet);
+        }
+    }
+
+    private void getWeatherData(List<WeatherData> result, ResultSet resultSet) throws SQLException {
+        while (resultSet.next()) {
+            WeatherData weatherData = createWeatherDataFromResultSet(resultSet);
+            result.add(weatherData);
+        }
+    }
+
+    private WeatherData createWeatherDataFromResultSet(ResultSet resultSet) throws SQLException {
+        String locationName = resultSet.getString("locationName");
+        double temp = resultSet.getDouble("temp");
+        double pop = resultSet.getDouble("pop");
+        int humidity = resultSet.getInt("humidity");
+        int clouds = resultSet.getInt("clouds");
+        double windSpeed = resultSet.getDouble("windSpeed");
+
+        return new WeatherData(locationName, temp, pop, humidity, clouds, windSpeed);
+    }
+
+    private void handleException(Exception e) throws ExpressTravelBusinessUnitException {
+        if (e instanceof SQLException) {
+            throw new ExpressTravelBusinessUnitException("SQL Exception: " + e.getMessage(), e);
+        } else if (e instanceof ExpressTravelBusinessUnitException) {
+            throw new RuntimeException("Business Unit Exception: " + e.getMessage(), e);
+        }
     }
 
     @Override
@@ -267,32 +324,38 @@ public record ExpressTravelSQLiteDatamart(String dbPath) implements ExpressTrave
             String sql = "SELECT * FROM accommodations WHERE locationName = ?";
             try (PreparedStatement statement = connection.prepareStatement(sql)) {
                 statement.setString(1, location);
-
-                try (ResultSet resultSet = statement.executeQuery()) {
-                    while (resultSet.next()) {
-                        String locationName = resultSet.getString("locationName");
-                        String url = resultSet.getString("url");
-                        String name = resultSet.getString("name");
-                        String city = resultSet.getString("city");
-                        String lat = resultSet.getString("lat");
-                        String lng = resultSet.getString("lng");
-                        int reviewsCount = resultSet.getInt("reviewsCount");
-                        double rating = resultSet.getDouble("rating");
-                        int totalPrice = resultSet.getInt("totalPrice");
-
-                        AccommodationData accommodationData = new AccommodationData(locationName, url, name, city,
-                                lat, lng, reviewsCount, rating, totalPrice);
-                        result.add(accommodationData);
-                    }
-                }
+                executeQueryAndGetAccommodationData(statement, result);
             }
-        } catch (SQLException e) {
-            throw new ExpressTravelBusinessUnitException(e.getMessage(), e);
-        } catch (ExpressTravelBusinessUnitException e) {
-            throw new RuntimeException(e);
+        } catch (SQLException | ExpressTravelBusinessUnitException e) {
+            handleException(e);
         }
 
         return result;
+    }
+
+    private static void executeQueryAndGetAccommodationData(PreparedStatement statement, List<AccommodationData> result)
+            throws SQLException {
+        try (ResultSet resultSet = statement.executeQuery()) {
+            while (resultSet.next()) {
+                AccommodationData accommodationData = createAccommodationDataFromResultSet(resultSet);
+                result.add(accommodationData);
+            }
+        }
+    }
+
+    private static AccommodationData createAccommodationDataFromResultSet(ResultSet resultSet) throws SQLException {
+        String locationName = resultSet.getString("locationName");
+        String url = resultSet.getString("url");
+        String name = resultSet.getString("name");
+        String city = resultSet.getString("city");
+        String lat = resultSet.getString("lat");
+        String lng = resultSet.getString("lng");
+        int reviewsCount = resultSet.getInt("reviewsCount");
+        double rating = resultSet.getDouble("rating");
+        int totalPrice = resultSet.getInt("totalPrice");
+
+        return new AccommodationData(locationName, url, name, city,
+                lat, lng, reviewsCount, rating, totalPrice);
     }
 
     public Set<String> getAllLocations(String tableName) throws ExpressTravelBusinessUnitException {
@@ -302,11 +365,7 @@ public record ExpressTravelSQLiteDatamart(String dbPath) implements ExpressTrave
             String sql = "SELECT DISTINCT locationName FROM " + tableName;
             try (PreparedStatement statement = connection.prepareStatement(sql);
                  ResultSet resultSet = statement.executeQuery()) {
-
-                while (resultSet.next()) {
-                    String locationName = resultSet.getString("locationName");
-                    locations.add(locationName);
-                }
+                addLocationToSet(resultSet, locations);
             }
         } catch (SQLException e) {
             throw new ExpressTravelBusinessUnitException(e.getMessage(), e);
@@ -315,6 +374,10 @@ public record ExpressTravelSQLiteDatamart(String dbPath) implements ExpressTrave
         return locations;
     }
 
-
+    private static void addLocationToSet(ResultSet resultSet, Set<String> locations) throws SQLException {
+        while (resultSet.next()) {
+            locations.add(resultSet.getString("locationName"));
+        }
+    }
 }
 

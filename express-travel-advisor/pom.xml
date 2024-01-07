@@ -10,7 +10,7 @@
     </parent>
 
     <groupId>hernandez.guerra</groupId>
-    <artifactId>express-travel-business-unit</artifactId>
+    <artifactId>express-travel-advisor</artifactId>
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>

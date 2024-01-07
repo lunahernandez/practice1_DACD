@@ -26,17 +26,18 @@ public class JMSEventSubscriber implements EventSubscriber {
             Connection connection = createConnection();
             Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
 
-            Topic destination1 = session.createTopic(topicName1);
-            MessageConsumer consumer1 = session.createDurableSubscriber(destination1, clientID + "-" + topicName1);
-            setupMessageListener(consumer1, topicName1);
-
-            Topic destination2 = session.createTopic(topicName2);
-            MessageConsumer consumer2 = session.createDurableSubscriber(destination2, clientID + "-" + topicName2);
-            setupMessageListener(consumer2, topicName2);
+            subscribeToTopic(session, topicName1);
+            subscribeToTopic(session, topicName2);
 
         } catch (JMSException e) {
             throw new ExpressTravelBusinessUnitException(e.getMessage(), e);
         }
+    }
+
+    private void subscribeToTopic(Session session, String topicName) throws JMSException {
+        Topic destination = session.createTopic(topicName);
+        MessageConsumer consumer = session.createDurableSubscriber(destination, clientID + "-" + topicName);
+        setupMessageListener(consumer, topicName);
     }
 
     private void setupMessageListener(MessageConsumer consumer, String topicName) throws JMSException {
@@ -64,5 +65,4 @@ public class JMSEventSubscriber implements EventSubscriber {
             System.out.println("Received message is not an instance of TextMessage. Ignoring...");
         }
     }
-
 }

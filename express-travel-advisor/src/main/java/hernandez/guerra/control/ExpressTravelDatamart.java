@@ -15,6 +15,7 @@ public interface ExpressTravelDatamart {
             throws ExpressTravelBusinessUnitException;
 
     List<WeatherData> getWeather(String locationName) throws ExpressTravelBusinessUnitException;
+
     List<AccommodationData> getAccommodation(String locationName) throws ExpressTravelBusinessUnitException;
 
     Set<String> getAllLocations(String weatherPredictions) throws ExpressTravelBusinessUnitException;

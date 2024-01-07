@@ -14,7 +14,6 @@ public class DatamartInitializer {
 
     public File findLatestEventFile(String topicName) {
         File topicDirectory = new File(eventStoreDirectory + "/" + topicName);
-
         if (!topicDirectory.exists() || !topicDirectory.isDirectory()) {
             return null;
         }
@@ -24,6 +23,10 @@ public class DatamartInitializer {
             return null;
         }
 
+        return findLatestFile(ssDirectories);
+    }
+
+    private static File findLatestFile(File[] ssDirectories) {
         return Arrays.stream(ssDirectories)
                 .flatMap(ssDir -> Arrays.stream(Objects.requireNonNull(ssDir.listFiles())))
                 .filter(File::isFile)

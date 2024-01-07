@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.Scanner;
 
 public class TravelRecommendationCLI {
-    private static TravelRecommendationLogic recommendationLogic;
+    private final TravelRecommendationLogic recommendationLogic;
 
     private static final int[] LOW_HUMIDITY_LIMIT = new int[]{0, 39};
     private static final int[] MODERATE_HUMIDITY_LIMIT = new int[]{40, 59};
@@ -80,19 +80,19 @@ public class TravelRecommendationCLI {
         }
 
     }
-    private static void showWelcome() {
+    private void showWelcome() {
         System.out.println("\nWelcome to ExpressTravel App! If you enjoy last-minute plans, you're in the right place.");
         System.out.println("Explore our options and discover your perfect destination for a 5-day getaway!");
     }
 
-    private static void displayMenu() {
+    private void displayMenu() {
         System.out.println("1. Surprise me!");
         System.out.println("2. Set my preferences");
         System.out.println("3. Recommendations");
         System.out.println("4. Exit");
     }
 
-    private static int getUserChoice(Scanner scanner) {
+    private int getUserChoice(Scanner scanner) {
         try {
             return scanner.nextInt();
         } catch (InputMismatchException e) {
@@ -103,7 +103,7 @@ public class TravelRecommendationCLI {
     }
 
 
-    private static void setDefaultValues() {
+    private void setDefaultValues() {
         temperaturePreference = false;
         sunRainPreference = true;
         humidityLimits = LOW_HUMIDITY_LIMIT;
@@ -111,7 +111,7 @@ public class TravelRecommendationCLI {
         accommodationPriceLimits = ECONOMIC_ACCOMMODATION_PRICE_LIMIT;
     }
 
-    private static void setPreferences() {
+    private void setPreferences() {
         recommendationLogic.setPreferences(
                 temperaturePreference,
                 sunRainPreference,
@@ -122,12 +122,12 @@ public class TravelRecommendationCLI {
     }
 
 
-    private static void setUserValues(Scanner scanner) {
+    private void setUserValues(Scanner scanner) {
         setClimatePreferences(scanner);
         setAccommodationPreferences(scanner);
     }
 
-    private static void setClimatePreferences(Scanner scanner) {
+    private void setClimatePreferences(Scanner scanner) {
         System.out.println("Set your climate preferences:");
 
         System.out.println("Team Cold(1) vs. Team Warm(2)");
@@ -146,17 +146,17 @@ public class TravelRecommendationCLI {
     }
 
 
-    private static boolean setTemperaturePreference(Scanner scanner) {
+    private boolean setTemperaturePreference(Scanner scanner) {
         int temperatureChoice = scanner.nextInt();
         return temperatureChoice == 1;
     }
 
-    private static boolean setSunRainPreference(Scanner scanner) {
+    private boolean setSunRainPreference(Scanner scanner) {
         int sunRainChoice = scanner.nextInt();
         return sunRainChoice == 1;
     }
 
-    private static int[] setHumidityPreference(Scanner scanner) {
+    private int[] setHumidityPreference(Scanner scanner) {
         System.out.println("1. Low");
         System.out.println("2. Moderate");
         System.out.println("3. High");
@@ -172,7 +172,7 @@ public class TravelRecommendationCLI {
     }
 
 
-    private static double[] setWindSpeedPreference(Scanner scanner) {
+    private double[] setWindSpeedPreference(Scanner scanner) {
         System.out.println("1. Low");
         System.out.println("2. Moderate");
         System.out.println("3. High");
@@ -187,7 +187,7 @@ public class TravelRecommendationCLI {
         };
     }
 
-    private static void setAccommodationPreferences(Scanner scanner) {
+    private void setAccommodationPreferences(Scanner scanner) {
         System.out.println("Set your accommodation preferences:");
 
         System.out.println("Price preferences:");
@@ -197,7 +197,7 @@ public class TravelRecommendationCLI {
     }
 
 
-    private static double[] setAccommodationPricePreference(Scanner scanner) {
+    private double[] setAccommodationPricePreference(Scanner scanner) {
         System.out.println("1. Economic");
         System.out.println("2. Standard");
         System.out.println("3. Expensive");
@@ -213,7 +213,7 @@ public class TravelRecommendationCLI {
         };
     }
 
-    private static void showBestOption(Map<Map.Entry<AccommodationData, WeatherData>, Double> bestOptionMap) {
+    private void showBestOption(Map<Map.Entry<AccommodationData, WeatherData>, Double> bestOptionMap) {
         Map.Entry<AccommodationData, WeatherData> bestOption = bestOptionMap.keySet().iterator().next();
         double bestOptionScore = bestOptionMap.get(bestOption);
         System.out.println("\nBest Travel Destination with a score of " + round(bestOptionScore, 4) +"/1:");
@@ -222,14 +222,14 @@ public class TravelRecommendationCLI {
 
     }
 
-    private static void showTravelDestination(Map.Entry<AccommodationData, WeatherData> bestOption) {
+    private void showTravelDestination(Map.Entry<AccommodationData, WeatherData> bestOption) {
         AccommodationData accommodation = bestOption.getKey();
         WeatherData weather = bestOption.getValue();
         showAccommodationInfo(accommodation);
         showWeatherInfo(weather);
     }
 
-    private static void showRecommendations(Map<Map.Entry<AccommodationData, WeatherData>, Double> bestOptionMap) {
+    private void showRecommendations(Map<Map.Entry<AccommodationData, WeatherData>, Double> bestOptionMap) {
         System.out.println("\nWe have chosen the three best rooms for you:");
 
         int count = 1;
@@ -247,7 +247,7 @@ public class TravelRecommendationCLI {
     }
 
 
-    private static void showAccommodationInfo(AccommodationData accommodation) {
+    private void showAccommodationInfo(AccommodationData accommodation) {
         System.out.println("Name: " + accommodation.name());
         System.out.println("The accommodation is located in " + accommodation.city() +
                 ", in " + accommodation.locationName());
@@ -259,7 +259,7 @@ public class TravelRecommendationCLI {
         System.out.println("You can find more information about the accommodation here: " + accommodation.url());
     }
 
-    private static void showWeatherInfo(WeatherData weather) {
+    private void showWeatherInfo(WeatherData weather) {
         System.out.println("\nWe have averaged the weather forecasts for the next few days for you to enjoy at your leisure.");
         System.out.println("Here we leave some data that may be useful for you:");
         System.out.println("The average temperature will be " + round(weather.temp(), 2) + "ºC");
@@ -269,7 +269,7 @@ public class TravelRecommendationCLI {
                 + round(weather.windSpeed(), 2) + "m/s");
     }
 
-    private static double round(double value, int decimals) {
+    private double round(double value, int decimals) {
         if (decimals < 0) throw new IllegalArgumentException();
 
         BigDecimal bd = new BigDecimal(Double.toString(value));
