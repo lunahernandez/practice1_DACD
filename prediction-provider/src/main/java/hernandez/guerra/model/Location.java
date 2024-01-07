@@ -1,3 +1,3 @@
 package hernandez.guerra.model;
 
-public record Location(String lat, String lon, String island) {}
+public record Location(String name, String lat, String lon) {}

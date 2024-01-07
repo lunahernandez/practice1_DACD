@@ -90,8 +90,7 @@ public class OpenWeatherMapProvider implements WeatherProvider {
         double windSpeed = weatherInfo.getAsJsonObject("wind").get("speed").getAsDouble();
 
         return new Weather(Instant.now(), "WeatherProvider", predictionTime, location,
-                temperature, pop, humidity, clouds, windSpeed)
-                ;
+                temperature, pop, humidity, clouds, windSpeed);
     }
 
     private static boolean isMidday(long timestamp) {

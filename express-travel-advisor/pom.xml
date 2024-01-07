@@ -10,13 +10,20 @@
     </parent>
 
     <groupId>hernandez.guerra</groupId>
-    <artifactId>event-store-builder</artifactId>
+    <artifactId>express-travel-advisor</artifactId>
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
+    <dependencies>
+        <dependency>
+            <groupId>org.xerial</groupId>
+            <artifactId>sqlite-jdbc</artifactId>
+            <version>3.44.1.0</version>
+        </dependency>
+    </dependencies>
 
     <build>
         <plugins>
@@ -46,5 +53,4 @@
             </plugin>
         </plugins>
     </build>
-
 </project>

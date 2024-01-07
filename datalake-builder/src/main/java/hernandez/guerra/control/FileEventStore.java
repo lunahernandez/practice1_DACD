@@ -18,26 +18,25 @@ import java.time.format.DateTimeFormatter;
 
 public class FileEventStore implements EventStore {
     private final String eventStoreDirectory;
-    private final String topicName;
 
-    public FileEventStore(String eventStoreDirectory, String topicName) {
+    public FileEventStore(String eventStoreDirectory) {
         this.eventStoreDirectory = eventStoreDirectory;
-        this.topicName = topicName;
     }
 
     @Override
-    public void saveEvent(TextMessage textMessage) throws EventStoreBuilderException {
-        File file = fileOf(textMessage);
+    public void saveEvent(TextMessage textMessage, String topicName) throws EventStoreBuilderException {
+        File file = fileOf(textMessage, topicName);
+        System.out.println(file);
         createDirectory(file);
         writeEventToFile(file, textMessage);
     }
 
-    private File fileOf(TextMessage textMessage) throws EventStoreBuilderException {
-        String filePath = buildEventFilePath(textMessage);
+    private File fileOf(TextMessage textMessage, String topicName) throws EventStoreBuilderException {
+        String filePath = buildEventFilePath(textMessage, topicName);
         return new File(filePath);
     }
 
-    private String buildEventFilePath(TextMessage textMessage) throws EventStoreBuilderException {
+    private String buildEventFilePath(TextMessage textMessage, String topicName) throws EventStoreBuilderException {
         try {
             String eventData = textMessage.getText();
             String ss = extractSsFromJson(eventData);
@@ -79,8 +78,11 @@ public class FileEventStore implements EventStore {
         try (FileWriter writer = new FileWriter(file, true)) {
             String eventData = textMessage.getText();
             writer.write(eventData + System.lineSeparator());
+            System.out.println(eventData);
         } catch (IOException | JMSException e) {
             throw new EventStoreBuilderException(e.getMessage(), e);
         }
     }
+
+
 }
