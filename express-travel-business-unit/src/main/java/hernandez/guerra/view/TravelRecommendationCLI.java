@@ -5,6 +5,8 @@ import hernandez.guerra.exceptions.ExpressTravelBusinessUnitException;
 import hernandez.guerra.model.AccommodationData;
 import hernandez.guerra.model.WeatherData;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.InputMismatchException;
 import java.util.Map;
 import java.util.Scanner;
@@ -62,6 +64,8 @@ public class TravelRecommendationCLI {
                     showBestOption(bestUserOption);
                     break;
                 case 3:
+                    setDefaultValues();
+                    setPreferences();
                     Map<Map.Entry<AccommodationData, WeatherData>, Double> recommendations =
                             recommendationLogic.getRecommendations();
                     showRecommendations(recommendations);
@@ -212,9 +216,9 @@ public class TravelRecommendationCLI {
     private static void showBestOption(Map<Map.Entry<AccommodationData, WeatherData>, Double> bestOptionMap) {
         Map.Entry<AccommodationData, WeatherData> bestOption = bestOptionMap.keySet().iterator().next();
         double bestOptionScore = bestOptionMap.get(bestOption);
-        System.out.println("\nBest Travel Destination with a score of " + bestOptionScore +"/1:");
+        System.out.println("\nBest Travel Destination with a score of " + round(bestOptionScore, 4) +"/1:");
         showTravelDestination(bestOption);
-        System.out.println("Enjoy your stay and thank you for choosing us!");
+        System.out.println("\nEnjoy your stay and thank you for choosing us!");
 
     }
 
@@ -232,11 +236,14 @@ public class TravelRecommendationCLI {
         for (Map.Entry<AccommodationData, WeatherData> bestOption : bestOptionMap.keySet()) {
             double bestOptionScore = bestOptionMap.get(bestOption);
 
-            System.out.println("\nTravel Destination " + count + " with a score of " + bestOptionScore + "/1:");
+            System.out.println("\nTravel Destination " + count +
+                    " with a score of " + round(bestOptionScore, 4) + "/1:");
             showTravelDestination(bestOption);
 
             count++;
         }
+        System.out.println("\nChoose the one that best suits your preferences.");
+        System.out.println("Enjoy your stay and thank you for choosing us!");
     }
 
 
@@ -255,10 +262,18 @@ public class TravelRecommendationCLI {
     private static void showWeatherInfo(WeatherData weather) {
         System.out.println("\nWe have averaged the weather forecasts for the next few days for you to enjoy at your leisure.");
         System.out.println("Here we leave some data that may be useful for you:");
-        System.out.println("The average temperature will be " + weather.temp() + "ºC");
-        System.out.println("On average, there will be a " + weather.pop() + "% chance of precipitation and " +
+        System.out.println("The average temperature will be " + round(weather.temp(), 2) + "ºC");
+        System.out.println("On average, there will be a " + round(weather.pop(), 4) + "% chance of precipitation and " +
                 weather.humidity() + "% humidity");
         System.out.println("You will find a " + weather.clouds() + "% of cloudiness and an average wind speed of "
-                + weather.windSpeed() + "m/s");
+                + round(weather.windSpeed(), 2) + "m/s");
+    }
+
+    private static double round(double value, int decimals) {
+        if (decimals < 0) throw new IllegalArgumentException();
+
+        BigDecimal bd = new BigDecimal(Double.toString(value));
+        bd = bd.setScale(decimals, RoundingMode.HALF_UP);
+        return bd.doubleValue();
     }
 }

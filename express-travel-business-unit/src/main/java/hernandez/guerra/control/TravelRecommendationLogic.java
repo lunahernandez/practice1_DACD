@@ -161,46 +161,30 @@ public class TravelRecommendationLogic {
     }
 
     private static double calculateTempScore(double temp) {
-        double baseScore = temperaturePreference
+        double baseScore = (temperaturePreference
                 ? (temp <= TEMPERATURE_LIMIT ? 1.0 : 0.3)
-                : (temp <= TEMPERATURE_LIMIT ? 0.3 : 1.0);
-
-        return baseScore * TEMPERATURE_WEIGHT;
+                : (temp <= TEMPERATURE_LIMIT ? 0.3 : 1.0));
+        double temperatureRank = (temp < 0) ? 1.0 : 1.0 / (temp + 1);
+        return baseScore * TEMPERATURE_WEIGHT * temperatureRank;
     }
 
     private static double calculateSunnyScore(double pop, int clouds) {
-        double popScore;
-        double cloudsScore;
+        double popScore = calculatePopScore(pop);
+        double cloudsScore = calculateCloudsScore(clouds);
+
         if (sunRainPreference) {
-            popScore = (1.0 - calculatePopScore(pop));
-            cloudsScore = calculateCloudsScore(clouds) * 0.4;
+            return (1.0 - popScore) * 0.6 + (1.0 - cloudsScore) * 0.4;
         } else {
-            popScore = calculatePopScore(pop);
-            cloudsScore = (1.0 - calculateCloudsScore(clouds) * 0.4);
+            return popScore * 0.6 + cloudsScore * 0.4;
         }
-        return (cloudsScore + popScore) * SUNNY_WEIGHT;
     }
 
     private static double calculateCloudsScore(int clouds) {
-        if (clouds <= 30) {
-            return 1.0;
-        } else if (clouds <= 60) {
-            return 0.25;
-        } else {
-            return 0.05;
-        }
+        return 1.0 - clouds / 100.0;
     }
 
     private static double calculatePopScore(double pop) {
-        if (pop <= 10) {
-            return 0.05;
-        } else if (pop <= 30) {
-            return 0.10;
-        } else if (pop <= 50) {
-            return 0.25;
-        } else {
-            return 1.0;
-        }
+        return 1.0 - pop / 100.0;
     }
 
     private static double calculateHumidityScore(int humidity) {
