@@ -14,12 +14,14 @@ public class AccommodationController {
     private final AccommodationStore accommodationStore;
     private final List<Location> locationList;
 
-    public AccommodationController(AccommodationProvider accommodationProvider, AccommodationStore accommodationStore, List<Location> locationList) {
+    public AccommodationController(AccommodationProvider accommodationProvider, AccommodationStore accommodationStore,
+                                   List<Location> locationList) {
         this.accommodationProvider = accommodationProvider;
         this.accommodationStore = accommodationStore;
         this.locationList = locationList;
     }
-    public void execute(){
+
+    public void execute() {
         periodicAccommodationUpdateTask();
     }
 
@@ -33,6 +35,7 @@ public class AccommodationController {
         };
         timer.schedule(task, 0, 6 * 60 * 60 * 1000);
     }
+
     private void updateAccommodationDataTask() {
         try {
             updateAccommodationData();
@@ -46,11 +49,8 @@ public class AccommodationController {
         for (Location location : locationList) {
             try {
                 Thread.sleep(12000);
-                System.out.println("Starting " + location.name());
-
                 for (Accommodation accommodation : accommodationProvider.get(location)) {
                     accommodationStore.save(accommodation);
-                    System.out.println(accommodation.city() + " saved");
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();

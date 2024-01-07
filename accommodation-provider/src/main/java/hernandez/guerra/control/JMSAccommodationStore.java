@@ -9,7 +9,7 @@ import org.apache.activemq.ActiveMQConnectionFactory;
 
 import java.time.Instant;
 
-public class JMSAccommodationStore implements AccommodationStore{
+public class JMSAccommodationStore implements AccommodationStore {
     private final String topicName;
     private final String url;
 

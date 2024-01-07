@@ -1,6 +1,5 @@
 package hernandez.guerra.control;
 
-import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -24,6 +23,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 public class AirbnbProvider implements AccommodationProvider {
     private final String apiKey;
@@ -106,15 +106,10 @@ public class AirbnbProvider implements AccommodationProvider {
 
     private List<Accommodation> convertJsonToAccommodationList(JsonObject jsonObject, Location location) {
         List<Accommodation> accommodationList = new ArrayList<>();
-        JsonArray accommodationListArray = jsonObject.getAsJsonArray("results");
-
-        for (JsonElement element : accommodationListArray) {
-            Accommodation accommodation = createAccommodationFromJson(element.getAsJsonObject(), location);
-            if (accommodation != null) {
-                accommodationList.add(accommodation);
-            }
-        }
-
+        jsonObject.getAsJsonArray("results").forEach(element ->
+                Optional.ofNullable(createAccommodationFromJson(element.getAsJsonObject(), location))
+                        .ifPresent(accommodationList::add)
+        );
         return accommodationList;
     }
 
@@ -126,7 +121,7 @@ public class AirbnbProvider implements AccommodationProvider {
                 : new Accommodation(Instant.now(), "AccommodationProvider", generalAttributes.get(0),
                 generalAttributes.get(1), location, generalAttributes.get(2), generalAttributes.get(3),
                 generalAttributes.get(4),
-                accommodationInfo.has("reviewsCount") ?accommodationInfo.get("reviewsCount").getAsInt() : 0,
+                accommodationInfo.has("reviewsCount") ? accommodationInfo.get("reviewsCount").getAsInt() : 0,
                 accommodationInfo.has("rating") ? accommodationInfo.get("rating").getAsDouble() : 0.0,
                 accommodationInfo.getAsJsonObject("price").get("total").getAsInt());
     }
